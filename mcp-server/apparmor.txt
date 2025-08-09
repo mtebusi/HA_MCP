@@ -1,0 +1,54 @@
+#include <tunables/global>
+
+profile mcp_claude flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+  #include <abstractions/bash>
+  #include <abstractions/nameservice>
+
+  # Allow Node.js execution
+  /usr/bin/node ix,
+  /usr/bin/nodejs ix,
+  
+  # Allow access to app directory
+  /app/ r,
+  /app/** r,
+  /app/dist/** rm,
+  
+  # Allow access to data directory
+  /data/ r,
+  /data/** rw,
+  
+  # Allow access to Node modules
+  /app/node_modules/ r,
+  /app/node_modules/** r,
+  
+  # Allow network access for WebSocket
+  network tcp,
+  network inet stream,
+  network inet6 stream,
+  
+  # Allow access to system files needed by Node.js
+  /proc/sys/kernel/random/uuid r,
+  /proc/*/fd/ r,
+  /proc/*/stat r,
+  /proc/*/status r,
+  /dev/urandom r,
+  /dev/null rw,
+  /dev/tty rw,
+  
+  # Allow bashio for configuration
+  /usr/bin/bashio rix,
+  /usr/lib/bashio/** r,
+  
+  # Allow temporary files
+  /tmp/ r,
+  /tmp/** rw,
+  owner /tmp/** rw,
+  
+  # Allow supervisor communication
+  /run/s6/** rw,
+  
+  # Standard I/O for MCP protocol
+  /dev/std* rw,
+  /dev/pts/* rw,
+}

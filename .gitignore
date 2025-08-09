@@ -21,3 +21,6 @@ create_images.py
 
 # Context and documentation files
 *-claude-context.md
+
+# Claude Code subagent documentation
+claude-code-subagent-docs/

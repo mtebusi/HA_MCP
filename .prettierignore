@@ -1,0 +1,7 @@
+# Prettier ignore file
+node_modules/
+dist/
+build/
+coverage/
+*.min.js
+*.bundle.js
