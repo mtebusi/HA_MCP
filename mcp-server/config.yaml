@@ -45,7 +45,7 @@ schema:
     - "str?"
   blocked_entities:
     - "match(^[a-z0-9_]+\\.[a-z0-9_]+$)?"
-image: {arch}-addon-mcp-claude
+image: "{arch}-addon-mcp-claude"
 map:
   - homeassistant_config:ro
   - ssl:ro
