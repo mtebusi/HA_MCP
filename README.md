@@ -55,17 +55,7 @@ Click the button above to automatically add this repository to your Home Assista
 
 ### Claude Desktop Configuration
 
-1. **Create a Home Assistant Token**
-   - Go to your profile → **Long-Lived Access Tokens**
-   - Click **Create Token** → Name it "Claude MCP"
-   - Copy the token immediately
-
-2. **Download Client Script**
-   ```bash
-   curl -O https://raw.githubusercontent.com/mtebusi/HA_MCP/main/claude-desktop-client.js
-   ```
-
-3. **Configure Claude Desktop**
+1. **Configure Claude Desktop**
    
    Edit `claude_desktop_config.json`:
    - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
@@ -76,19 +66,24 @@ Click the button above to automatically add this repository to your Home Assista
    {
      "mcpServers": {
        "homeassistant": {
-         "command": "node",
-         "args": ["/path/to/claude-desktop-client.js"],
+         "command": "docker",
+         "args": [
+           "exec",
+           "-i",
+           "addon_local_mcp_claude",
+           "node",
+           "/app/dist/index.js"
+         ],
          "env": {
-           "HOMEASSISTANT_HOST": "YOUR_HA_IP",
-           "HOMEASSISTANT_PORT": "6789",
-           "HOMEASSISTANT_TOKEN": "YOUR_ACCESS_TOKEN"
+           "SUPERVISOR_TOKEN": "YOUR_SUPERVISOR_TOKEN",
+           "HOMEASSISTANT_URL": "ws://supervisor/core/api/websocket"
          }
        }
      }
    }
    ```
 
-4. **Restart Claude Desktop**
+2. **Restart Claude Desktop**
 
 ## Available Tools
 
