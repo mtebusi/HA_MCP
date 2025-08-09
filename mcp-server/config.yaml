@@ -14,38 +14,11 @@ arch:
   - amd64
   - i386
 init: false
-machine:
-  - qemux86
-  - qemux86-64
-  - qemuarm
-  - qemuarm-64
 homeassistant: 2024.10.0
-security_rating: 2
 hassio_api: true
 homeassistant_api: true
 auth_api: true
-host_network: false
-host_pid: false
-host_ipc: false
-host_uts: false
-host_dbus: false
-device_tree: false
-kernel_modules: false
-stdin: false
-legacy: false
-boot: auto
-realtime: false
-timeout: 10
-tmpfs: false
-discovery: []
-services: []
 apparmor: true
-backup_post: []
-backup_pre: []
-backup_exclude: []
-advanced: false
-stage: stable
-startup: application
 watchdog: false
 ports:
   6789/tcp: null
@@ -74,32 +47,12 @@ schema:
   blocked_entities:
     - "match(^[a-z0-9_]+\\.[a-z0-9_]+$)?"
 image: ghcr.io/mtebusi/{arch}-addon-mcp-claude
-environment: {}
 map:
-  - config:ro
+  - homeassistant_config:ro
   - ssl:ro
   - addons:ro
   - backup:ro
   - share:ro
   - media:ro
-video: false
-audio: false
-gpio: false
-usb: false
-uart: false
-udev: false
-devicetree: false
-docker_api: false
-privileged: []
-full_access: false
-hassio_role: default
-auth_api_expiry: 300
-ingress: false
-ingress_port: 0
-ingress_entry: /
-ingress_stream: false
 panel_icon: mdi:robot
 panel_title: MCP Claude
-panel_admin: true
-backup: hot
-journald: false
