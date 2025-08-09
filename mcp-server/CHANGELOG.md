@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2025-08-08
+### Added
+- Automated changelog generation via GitHub Actions
+- Release drafter configuration for automated release notes
+- Commit message categorization system
+- Pull request autolabeler based on title patterns
+- Logo image reference in README for better Add-on store presentation
+
+### Fixed
+- Icon not displaying in Home Assistant Add-on store listing
+- Logo/banner image not showing in add-on README
+- PNG images now contain actual visual content instead of placeholders
+
+### Changed
+- Updated icon.png with proper MCP server design (128x128)
+- Updated logo.png with gradient banner and branding (512x256)
+- Images now feature server stack visualization with LED indicators
+
 ## [1.0.1] - 2025-08-08
 ### Fixed
 - Fixed AppArmor profile loading error that prevented installation
@@ -42,5 +60,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI/CD pipeline
 - Comprehensive documentation and examples
 
+[1.0.2]: https://github.com/mtebusi/HA_MCP/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/mtebusi/HA_MCP/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/mtebusi/HA_MCP/releases/tag/v1.0.0
