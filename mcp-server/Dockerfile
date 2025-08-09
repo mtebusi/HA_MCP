@@ -2,6 +2,7 @@ ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.21
 FROM $BUILD_FROM
 
 # Install Node.js and build dependencies
+# This layer will be cached and reused across builds
 RUN apk add --no-cache \
     nodejs \
     npm \
@@ -13,17 +14,28 @@ RUN apk add --no-cache \
 # Set working directory
 WORKDIR /app
 
-# Copy all application files
-COPY package*.json tsconfig.json ./
+# Copy only package files first (for better layer caching)
+# This layer will only rebuild if package.json or package-lock.json changes
+COPY package*.json ./
+
+# Install dependencies separately from build
+# This layer will be cached if dependencies don't change
+RUN npm ci --only=production && \
+    npm cache clean --force
+
+# Copy TypeScript config and source files
+COPY tsconfig.json ./
 COPY src/ ./src/
 
-# Install dependencies and build
-RUN npm install && \
+# Build the TypeScript project
+# Install dev dependencies, build, then remove them
+RUN npm ci && \
     npm run build && \
     npm prune --production && \
-    rm -rf src/ tsconfig.json
+    rm -rf src/ tsconfig.json && \
+    npm cache clean --force
 
-# Copy run script
+# Copy run script last (least likely to change)
 COPY run.sh /run.sh
 RUN chmod a+x /run.sh
 
