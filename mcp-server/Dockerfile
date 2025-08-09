@@ -44,7 +44,7 @@ LABEL \
     io.hass.name="MCP Server for Claude" \
     io.hass.description="Model Context Protocol server for Claude AI integration" \
     io.hass.type="addon" \
-    io.hass.version="1.0.3"
+    io.hass.version="1.0.4"
 
 # Start the add-on
 CMD [ "/run.sh" ]

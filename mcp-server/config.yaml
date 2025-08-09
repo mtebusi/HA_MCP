@@ -1,5 +1,5 @@
 name: MCP Server for Claude
-version: 1.0.3
+version: 1.0.4
 slug: mcp_claude
 description: >-
   Control your smart home with Claude AI. This add-on bridges Claude Desktop

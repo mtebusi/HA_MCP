@@ -53,7 +53,7 @@ class HomeAssistantMCPServer {
     this.server = new Server(
       {
         name: 'homeassistant-mcp',
-        version: '1.0.0',
+        version: '1.0.4',
         protocolVersion: '1.0.0',
         capabilities: {
           tools: true,
