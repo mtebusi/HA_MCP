@@ -1,8 +1,9 @@
 # MCP Server for Claude - Home Assistant Add-on
 
 [![Add to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fmtebusi%2FHA_MCP)
-[![GitHub Release][releases-shield]][releases]
-[![License][license-shield]](LICENSE)
+[![GitHub Release](https://img.shields.io/github/v/release/mtebusi/HA_MCP?include_prereleases)](https://github.com/mtebusi/HA_MCP/releases)
+[![License](https://img.shields.io/github/license/mtebusi/HA_MCP)](LICENSE)
+[![GitHub Actions](https://img.shields.io/github/actions/workflow/status/mtebusi/HA_MCP/lint.yml)](https://github.com/mtebusi/HA_MCP/actions)
 
 Model Context Protocol (MCP) server add-on enabling Claude AI to interact with and control Home Assistant.
 
@@ -212,7 +213,3 @@ npm run build
 ## License
 
 MIT - See [LICENSE](LICENSE) file
-
-[releases-shield]: https://img.shields.io/github/release/mtebusi/HA_MCP.svg
-[releases]: https://github.com/mtebusi/HA_MCP/releases
-[license-shield]: https://img.shields.io/github/license/mtebusi/HA_MCP.svg
