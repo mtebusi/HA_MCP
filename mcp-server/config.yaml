@@ -18,6 +18,7 @@ homeassistant: 2024.10.0
 hassio_api: true
 homeassistant_api: true
 auth_api: true
+apparmor: false
 ports:
   6789/tcp: null
 ports_description:
