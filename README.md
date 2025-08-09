@@ -6,7 +6,16 @@
 [![Lint](https://github.com/mtebusi/HA_MCP/actions/workflows/lint.yaml/badge.svg)](https://github.com/mtebusi/HA_MCP/actions/workflows/lint.yaml)
 [![Builder](https://github.com/mtebusi/HA_MCP/actions/workflows/builder.yaml/badge.svg)](https://github.com/mtebusi/HA_MCP/actions/workflows/builder.yaml)
 
-Model Context Protocol (MCP) server add-on enabling Claude AI to interact with and control Home Assistant.
+**Control your Home Assistant smart home with Claude AI using natural language.** This add-on implements the Model Context Protocol (MCP) to give Claude Desktop direct, secure access to your Home Assistant instance. Turn lights on/off, create automations, debug issues, analyze energy usage, and manage your entire smart home through conversational AI.
+
+## 🌟 Key Features
+
+- **🗣️ Natural Language Control** - Talk to Claude like a human to control devices
+- **🔧 40+ Operations** - Query states, call services, create automations, analyze patterns
+- **🔒 Enterprise Security** - AppArmor, rate limiting, input sanitization, entity filtering
+- **⚡ Real-time Updates** - WebSocket connection for instant state changes
+- **🏗️ Multi-Architecture** - Supports ARM, AMD64, and i386 platforms
+- **🚀 Easy Installation** - One-click add to Home Assistant
 
 ## Installation
 
@@ -135,28 +144,32 @@ AI-enhanced operations:
 - `migration_check` - Migration assistance
 - `blueprint_import` - Import blueprints
 
-## Examples
+## 💬 Example Commands
 
-### Basic Usage
-```
-User: Show me all lights that are on
-Claude: I'll query for all light entities that are currently on.
-[Uses query tool with domain:"light" and state_filter:"on"]
-```
+Ask Claude natural language questions and commands like:
 
-### Advanced Automation
-```
-User: Create an automation that turns on lights at sunset
-Claude: I'll create a sunset automation for your lights.
-[Uses control tool with create_automation operation]
-```
+### 🏠 Device Control
+- *"Turn off all the lights in the bedroom"*
+- *"Set the thermostat to 72 degrees"*
+- *"Lock all doors and arm the security system"*
+- *"Is the garage door open?"*
 
-### System Analysis
-```
-User: Check my system performance and suggest optimizations
-Claude: I'll analyze your system performance and provide recommendations.
-[Uses assist tool with performance_analysis operation]
-```
+### 🤖 Automation Creation
+- *"Create an automation that dims lights when I start watching TV"*
+- *"Set up a morning routine that gradually turns on lights"*
+- *"Alert me if any door is left open for more than 5 minutes"*
+
+### 📊 Analysis & Optimization
+- *"Which devices are using the most energy?"*
+- *"Show me patterns in my heating usage"*
+- *"Are there any devices that are unavailable?"*
+- *"Optimize my automations for energy savings"*
+
+### 🔍 Troubleshooting
+- *"Why didn't my motion sensor trigger last night?"*
+- *"Debug my sunrise automation"*
+- *"What events fired in the last hour?"*
+- *"Check the health of my Z-Wave network"*
 
 ## Security
 
@@ -211,6 +224,24 @@ npm run build
 - [Issues](https://github.com/mtebusi/HA_MCP/issues)
 - [Discussions](https://github.com/mtebusi/HA_MCP/discussions)
 
+## 🔧 Compatibility
+
+- **Home Assistant**: 2024.10.0 or newer
+- **Claude Desktop**: Latest version with MCP support
+- **Platforms**: ARM (Raspberry Pi), AMD64 (x86_64), i386
+- **Operating Systems**: HassOS, Debian, Ubuntu, Alpine Linux
+- **Integrations**: Works with all Home Assistant integrations
+
+## 📚 Related Projects
+
+- [Model Context Protocol](https://github.com/anthropics/mcp) - The protocol specification
+- [Home Assistant](https://www.home-assistant.io/) - Open source home automation
+- [Claude Desktop](https://claude.ai/desktop) - Anthropic's AI assistant
+
 ## License
 
 MIT - See [LICENSE](LICENSE) file
+
+---
+
+**Keywords**: Home Assistant, Claude AI, MCP, Model Context Protocol, smart home, home automation, AI assistant, natural language processing, IoT, voice control, Anthropic, Claude Desktop, home assistant addon, hassio, automation, smart devices, artificial intelligence, LLM, websocket, real-time, TypeScript, Docker
