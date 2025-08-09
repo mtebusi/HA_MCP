@@ -16,15 +16,14 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Install dependencies
-RUN npm ci --only=production || npm install
-
 # Copy source code
 COPY src/ ./src/
 
-# Install dev dependencies and build
-RUN npm install --save-dev typescript @types/node && \
-    npm run build
+# Install ALL dependencies (including dev)
+RUN npm install
+
+# Build TypeScript
+RUN npm run build || (echo "Build failed, showing package.json:" && cat package.json && echo "Showing tsconfig.json:" && cat tsconfig.json && echo "Listing src directory:" && ls -la src/ && exit 1)
 
 # Copy run script
 COPY run.sh /run.sh
