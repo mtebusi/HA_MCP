@@ -6,6 +6,19 @@
 [![Lint](https://github.com/mtebusi/HA_MCP/actions/workflows/lint.yaml/badge.svg)](https://github.com/mtebusi/HA_MCP/actions/workflows/lint.yaml)
 [![Builder](https://github.com/mtebusi/HA_MCP/actions/workflows/builder.yaml/badge.svg)](https://github.com/mtebusi/HA_MCP/actions/workflows/builder.yaml)
 
+[![Supports aarch64 Architecture](https://img.shields.io/badge/aarch64-yes-green.svg)](https://github.com/mtebusi/HA_MCP)
+[![Supports amd64 Architecture](https://img.shields.io/badge/amd64-yes-green.svg)](https://github.com/mtebusi/HA_MCP)
+[![Supports armhf Architecture](https://img.shields.io/badge/armhf-yes-green.svg)](https://github.com/mtebusi/HA_MCP)
+[![Supports armv7 Architecture](https://img.shields.io/badge/armv7-yes-green.svg)](https://github.com/mtebusi/HA_MCP)
+[![Supports i386 Architecture](https://img.shields.io/badge/i386-yes-green.svg)](https://github.com/mtebusi/HA_MCP)
+
+[![GitHub Activity](https://img.shields.io/github/commit-activity/m/mtebusi/HA_MCP)](https://github.com/mtebusi/HA_MCP/graphs/commit-activity)
+[![GitHub Last Commit](https://img.shields.io/github/last-commit/mtebusi/HA_MCP)](https://github.com/mtebusi/HA_MCP/commits)
+[![GitHub Issues](https://img.shields.io/github/issues/mtebusi/HA_MCP)](https://github.com/mtebusi/HA_MCP/issues)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/mtebusi/HA_MCP)](https://github.com/mtebusi/HA_MCP/pulls)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/mtebusi/HA_MCP/graphs/commit-activity)
+[![Community Forum](https://img.shields.io/badge/Community-Forum-41BDF5.svg)](https://community.home-assistant.io/)
+
 **Control your Home Assistant smart home with Claude AI using natural language.** This add-on implements the Model Context Protocol (MCP) to give Claude Desktop direct, secure access to your Home Assistant instance. Turn lights on/off, create automations, debug issues, analyze energy usage, and manage your entire smart home through conversational AI.
 
 ## 🌟 Key Features

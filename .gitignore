@@ -10,3 +10,11 @@ dist/
 *.swp
 *.swo
 *~
+
+# Test and development files
+test-*.sh
+test-*.js
+validate-*.sh
+*.test.js
+*.spec.js
+create_images.py

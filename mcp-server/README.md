@@ -5,6 +5,24 @@
 [![Add to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fmtebusi%2FHA_MCP)
 [![GitHub Release](https://img.shields.io/github/v/release/mtebusi/HA_MCP?include_prereleases)](https://github.com/mtebusi/HA_MCP/releases)
 [![License](https://img.shields.io/github/license/mtebusi/HA_MCP)](LICENSE)
+[![Lint Status](https://github.com/mtebusi/HA_MCP/actions/workflows/lint.yaml/badge.svg)](https://github.com/mtebusi/HA_MCP/actions/workflows/lint.yaml)
+[![Build Status](https://github.com/mtebusi/HA_MCP/actions/workflows/builder.yaml/badge.svg)](https://github.com/mtebusi/HA_MCP/actions/workflows/builder.yaml)
+
+### 🏗️ Supported Architectures
+
+[![aarch64](https://img.shields.io/badge/aarch64-yes-green.svg)](https://github.com/mtebusi/HA_MCP)
+[![amd64](https://img.shields.io/badge/amd64-yes-green.svg)](https://github.com/mtebusi/HA_MCP)
+[![armhf](https://img.shields.io/badge/armhf-yes-green.svg)](https://github.com/mtebusi/HA_MCP)
+[![armv7](https://img.shields.io/badge/armv7-yes-green.svg)](https://github.com/mtebusi/HA_MCP)
+[![i386](https://img.shields.io/badge/i386-yes-green.svg)](https://github.com/mtebusi/HA_MCP)
+
+### 📊 Project Health
+
+[![GitHub Activity](https://img.shields.io/github/commit-activity/m/mtebusi/HA_MCP)](https://github.com/mtebusi/HA_MCP/graphs/commit-activity)
+[![Last Commit](https://img.shields.io/github/last-commit/mtebusi/HA_MCP)](https://github.com/mtebusi/HA_MCP/commits)
+[![Issues](https://img.shields.io/github/issues/mtebusi/HA_MCP)](https://github.com/mtebusi/HA_MCP/issues)
+[![Maintained](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/mtebusi/HA_MCP/graphs/commit-activity)
+[![Community](https://img.shields.io/badge/Community-Forum-41BDF5.svg)](https://community.home-assistant.io/)
 
 **Control your Home Assistant smart home with Claude AI using natural language.** This add-on implements the Model Context Protocol (MCP) to give Claude Desktop direct, secure access to your Home Assistant instance. Turn lights on/off, create automations, debug issues, analyze energy usage, and manage your entire smart home through conversational AI.
 

@@ -1,36 +1,38 @@
-ARG BUILD_FROM
+ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.21
 FROM $BUILD_FROM
 
-# Install Node.js and dependencies
+# Install Node.js and build dependencies
 RUN apk add --no-cache \
     nodejs \
     npm \
     python3 \
     make \
-    g++
+    g++ \
+    bash
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY tsconfig.json ./
-
-# Copy source code
+# Copy all application files
+COPY package*.json tsconfig.json ./
 COPY src/ ./src/
 
-# Install ALL dependencies (including dev)
-RUN npm install
-
-# Build TypeScript
-RUN npm run build || (echo "Build failed, showing package.json:" && cat package.json && echo "Showing tsconfig.json:" && cat tsconfig.json && echo "Listing src directory:" && ls -la src/ && exit 1)
+# Install dependencies and build
+RUN npm install && \
+    npm run build && \
+    npm prune --production && \
+    rm -rf src/ tsconfig.json
 
 # Copy run script
 COPY run.sh /run.sh
 RUN chmod a+x /run.sh
 
-# Expose MCP server port
-EXPOSE 6789
+# Labels
+LABEL \
+    io.hass.name="MCP Server for Claude" \
+    io.hass.description="Model Context Protocol server for Claude AI integration" \
+    io.hass.type="addon" \
+    io.hass.version="1.0.3"
 
 # Start the add-on
 CMD [ "/run.sh" ]
