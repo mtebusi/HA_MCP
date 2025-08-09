@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import WebSocket from 'ws';
-import { HomeAssistantWebSocket } from '../websocket-client.js';
+import { HomeAssistantWebSocket } from '../websocket-client';
 
 // Mock the ws module
 vi.mock('ws', () => {
@@ -263,7 +263,7 @@ describe('HomeAssistantWebSocket', () => {
     it('should handle subscription to events', async () => {
       const ws = (client as any).ws;
       
-      const subscribePromise = client.subscribeToEvents('state_changed');
+      const subscribePromise = client.subscribeEvents('state_changed');
       
       // Get the subscription command
       const sentCommand = JSON.parse(ws.send.mock.calls[0][0]);
@@ -283,7 +283,7 @@ describe('HomeAssistantWebSocket', () => {
       const ws = (client as any).ws;
       
       // First subscribe
-      const subscribePromise = client.subscribeToEvents('state_changed');
+      const subscribePromise = client.subscribeEvents('state_changed');
       const sentSubscribe = JSON.parse(ws.send.mock.calls[0][0]);
       
       ws.emit('message', JSON.stringify({
@@ -295,7 +295,7 @@ describe('HomeAssistantWebSocket', () => {
       const subscriptionId = await subscribePromise;
       
       // Now unsubscribe
-      const unsubscribePromise = client.unsubscribeFromEvents(subscriptionId);
+      const unsubscribePromise = client.unsubscribeEvents(subscriptionId);
       const sentUnsubscribe = JSON.parse(ws.send.mock.calls[1][0]);
       
       ws.emit('message', JSON.stringify({
@@ -357,7 +357,7 @@ describe('HomeAssistantWebSocket', () => {
       const commandPromise = client.sendCommand({ type: 'test_command' });
       
       // Close connection
-      client.close();
+      client.disconnect();
 
       // Command should be rejected
       await expect(commandPromise).rejects.toThrow();

@@ -4,7 +4,7 @@
  */
 
 import crypto from 'crypto';
-import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
+import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types';
 
 // Security configuration
 const SECURITY_CONFIG = {

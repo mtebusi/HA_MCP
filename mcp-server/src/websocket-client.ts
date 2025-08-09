@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import WebSocket from 'ws';
 import { EventEmitter } from 'events';
-import { WSMessage, EntityState, ServiceDomain } from './types.js';
+import { WSMessage, EntityState, ServiceDomain } from './types';
 
 export class HomeAssistantWebSocket extends EventEmitter {
   private ws: WebSocket | null = null;

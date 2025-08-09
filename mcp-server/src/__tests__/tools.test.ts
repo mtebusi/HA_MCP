@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { MCP_TOOLS, TOOL_HANDLERS } from '../tools.js';
-import type { HomeAssistantWebSocket } from '../websocket-client.js';
-import type { EntityState } from '../types.js';
+import { MCP_TOOLS, TOOL_HANDLERS } from '../tools';
+import type { HomeAssistantWebSocket } from '../websocket-client';
+import type { EntityState } from '../types';
 
 // Mock the WebSocket client
 const mockWs = {
@@ -146,16 +146,31 @@ describe('MCP Tools', () => {
       ['light.living_room', { 
         entity_id: 'light.living_room',
         state: 'on',
-        attributes: { brightness: 255 },
+        attributes: { 
+          brightness: 255,
+          friendly_name: 'Living Room Light'
+        },
         last_changed: '2025-01-01T00:00:00Z',
-        last_updated: '2025-01-01T00:00:00Z'
+        last_updated: '2025-01-01T00:00:00Z',
+        context: {
+          id: 'test-context-1',
+          parent_id: null,
+          user_id: null
+        }
       }],
       ['switch.garage', {
         entity_id: 'switch.garage',
         state: 'off',
-        attributes: {},
+        attributes: {
+          friendly_name: 'Garage Switch'
+        },
         last_changed: '2025-01-01T00:00:00Z',
-        last_updated: '2025-01-01T00:00:00Z'
+        last_updated: '2025-01-01T00:00:00Z',
+        context: {
+          id: 'test-context-2',
+          parent_id: null,
+          user_id: null
+        }
       }]
     ]);
 
@@ -476,9 +491,16 @@ describe('MCP Tools', () => {
         largeCache.set(`sensor.test_${i}`, {
           entity_id: `sensor.test_${i}`,
           state: `${i}`,
-          attributes: {},
+          attributes: {
+            friendly_name: `Test Sensor ${i}`
+          },
           last_changed: '2025-01-01T00:00:00Z',
-          last_updated: '2025-01-01T00:00:00Z'
+          last_updated: '2025-01-01T00:00:00Z',
+          context: {
+            id: `test-context-${i}`,
+            parent_id: null,
+            user_id: null
+          }
         });
       }
 

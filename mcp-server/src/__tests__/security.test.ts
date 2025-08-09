@@ -11,8 +11,8 @@ import {
   SessionManager,
   AuditLogger,
   PasswordValidator
-} from '../security.js';
-import { McpError } from '@modelcontextprotocol/sdk/types.js';
+} from '../security';
+import { McpError } from '@modelcontextprotocol/sdk/types';
 
 describe('Security Module Tests', () => {
   describe('TokenManager', () => {

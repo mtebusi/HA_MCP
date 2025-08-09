@@ -92,6 +92,7 @@ jobs:
           fi
           
       - name: Run Snyk vulnerability scan
+        if: ${{ secrets.SNYK_TOKEN != '' }}
         uses: snyk/actions/node@master
         continue-on-error: true
         env:
