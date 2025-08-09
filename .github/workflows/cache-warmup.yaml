@@ -1,0 +1,92 @@
+name: Cache Warmup
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC to warm up caches
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - 'mcp-server/package-lock.json'
+      - 'mcp-server/Dockerfile'
+
+jobs:
+  warm-cache:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        addon: [mcp-server]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.addon }}/package-lock.json
+
+      - name: Cache npm dependencies
+        uses: actions/cache@v4
+        id: npm-cache
+        with:
+          path: |
+            ~/.npm
+            ${{ matrix.addon }}/node_modules
+          key: ${{ runner.os }}-npm-${{ matrix.addon }}-${{ hashFiles(format('{0}/package-lock.json', matrix.addon)) }}
+          restore-keys: |
+            ${{ runner.os }}-npm-${{ matrix.addon }}-
+
+      - name: Install dependencies
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        run: |
+          cd ${{ matrix.addon }}
+          npm ci --prefer-offline --no-audit
+          echo "✅ Cache warmed for npm dependencies"
+
+      - name: Cache TypeScript build
+        uses: actions/cache@v4
+        id: ts-cache
+        with:
+          path: ${{ matrix.addon }}/dist
+          key: ${{ runner.os }}-tsbuild-${{ matrix.addon }}-${{ hashFiles(format('{0}/src/**/*.ts', matrix.addon), format('{0}/tsconfig.json', matrix.addon)) }}
+
+      - name: Build TypeScript
+        if: steps.ts-cache.outputs.cache-hit != 'true'
+        run: |
+          cd ${{ matrix.addon }}
+          npm run build
+          echo "✅ Cache warmed for TypeScript build"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:master
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ matrix.addon }}-${{ hashFiles(format('{0}/Dockerfile', matrix.addon), format('{0}/build.yaml', matrix.addon)) }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-${{ matrix.addon }}-
+
+      - name: Pull base images for caching
+        run: |
+          docker pull ghcr.io/home-assistant/aarch64-base:3.21 || true
+          docker pull ghcr.io/home-assistant/amd64-base:3.21 || true
+          docker pull ghcr.io/home-assistant/armhf-base:3.21 || true
+          docker pull ghcr.io/home-assistant/armv7-base:3.21 || true
+          docker pull ghcr.io/home-assistant/i386-base:3.21 || true
+          echo "✅ Base images cached"
+
+      - name: Report cache status
+        if: always()
+        run: |
+          echo "## Cache Warmup Report"
+          echo "- NPM Cache: ${{ steps.npm-cache.outputs.cache-hit == 'true' && 'HIT ✅' || 'MISS ⚠️' }}"
+          echo "- TypeScript Cache: ${{ steps.ts-cache.outputs.cache-hit == 'true' && 'HIT ✅' || 'MISS ⚠️' }}"
+          echo "- Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"

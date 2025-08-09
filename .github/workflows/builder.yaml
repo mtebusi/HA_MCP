@@ -76,6 +76,31 @@ jobs:
             echo "push=false" >> $GITHUB_OUTPUT
           fi
 
+      # Cache npm dependencies based on package-lock.json
+      - name: Cache npm dependencies
+        if: steps.check.outputs.build == 'true'
+        uses: actions/cache@v4
+        id: npm-cache
+        with:
+          path: |
+            ~/.npm
+            ${{ matrix.addon }}/node_modules
+          key: ${{ runner.os }}-npm-${{ matrix.addon }}-${{ hashFiles(format('{0}/package-lock.json', matrix.addon)) }}
+          restore-keys: |
+            ${{ runner.os }}-npm-${{ matrix.addon }}-
+            ${{ runner.os }}-npm-
+
+      # Cache TypeScript build artifacts
+      - name: Cache TypeScript build
+        if: steps.check.outputs.build == 'true'
+        uses: actions/cache@v4
+        id: ts-cache
+        with:
+          path: ${{ matrix.addon }}/dist
+          key: ${{ runner.os }}-tsbuild-${{ matrix.addon }}-${{ hashFiles(format('{0}/src/**/*.ts', matrix.addon), format('{0}/tsconfig.json', matrix.addon)) }}
+          restore-keys: |
+            ${{ runner.os }}-tsbuild-${{ matrix.addon }}-
+
       # Set up QEMU for multi-arch builds
       - name: Set up QEMU
         if: steps.check.outputs.build == 'true'
@@ -97,7 +122,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ matrix.addon }}-${{ github.sha }}
+          key: ${{ runner.os }}-buildx-${{ matrix.addon }}-${{ hashFiles(format('{0}/Dockerfile', matrix.addon), format('{0}/build.yaml', matrix.addon)) }}
           restore-keys: |
             ${{ runner.os }}-buildx-${{ matrix.addon }}-
             ${{ runner.os }}-buildx-
@@ -109,6 +134,18 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Pre-build npm dependencies if not cached
+      - name: Pre-build npm dependencies
+        if: steps.check.outputs.build == 'true'
+        run: |
+          cd ${{ matrix.addon }}
+          if [ ! -d "node_modules" ]; then
+            echo "Cache miss - installing npm dependencies"
+            npm ci --prefer-offline --no-audit
+          else
+            echo "Using cached npm dependencies"
+          fi
 
       - name: Test build ${{ matrix.addon }} add-on
         if: steps.check.outputs.build == 'true' && steps.check.outputs.push == 'false'
@@ -136,3 +173,23 @@ jobs:
             --target /data/${{ matrix.addon }} \
             --docker-hub "ghcr.io/${{ github.repository_owner }}" \
             --image "${{ steps.info.outputs.image }}"
+
+      # Report cache effectiveness
+      - name: Cache Performance Report
+        if: always() && steps.check.outputs.build == 'true'
+        run: |
+          echo "## 📊 Cache Performance Report"
+          echo "**Add-on:** ${{ matrix.addon }}"
+          echo "**Build Type:** ${{ steps.check.outputs.push == 'true' && 'Release' || 'Test' }}"
+          echo ""
+          echo "### Cache Hit Status:"
+          echo "- 📦 NPM Dependencies: ${{ steps.npm-cache.outputs.cache-hit == 'true' && '✅ HIT' || '❌ MISS' }}"
+          echo "- 🔨 TypeScript Build: ${{ steps.ts-cache.outputs.cache-hit == 'true' && '✅ HIT' || '❌ MISS' }}"
+          echo ""
+          if [[ "${{ steps.npm-cache.outputs.cache-hit }}" == "true" && "${{ steps.ts-cache.outputs.cache-hit }}" == "true" ]]; then
+            echo "🚀 **Optimal cache performance** - All caches hit!"
+          elif [[ "${{ steps.npm-cache.outputs.cache-hit }}" == "true" || "${{ steps.ts-cache.outputs.cache-hit }}" == "true" ]]; then
+            echo "⚡ **Partial cache hit** - Some acceleration achieved"
+          else
+            echo "🔄 **Full rebuild** - No cache hits (first build or significant changes)"
+          fi
