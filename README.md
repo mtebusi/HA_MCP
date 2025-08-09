@@ -1,217 +1,181 @@
-# Home Assistant MCP Server
+# Claude MCP Server for Home Assistant
 
-A Model Context Protocol (MCP) server that provides seamless integration with Home Assistant through WebSocket API. This server enables Claude Desktop to interact with your Home Assistant instance, control devices, monitor states, and manage automations.
+Enable Claude AI to control and interact with your Home Assistant instance through the Model Context Protocol (MCP).
 
-## Features
+## 🚀 Quick Start Guide
 
-- **Real-time WebSocket Connection**: Maintains persistent connection with automatic reconnection
-- **State Management**: Real-time entity state updates and caching
-- **Service Execution**: Call any Home Assistant service with full parameter support
-- **Event Subscriptions**: Subscribe to Home Assistant events for real-time monitoring
-- **Device & Area Management**: Query and filter entities by areas and devices
-- **Configuration Validation**: Validate automation configurations before deployment
-- **Comprehensive Error Handling**: Robust error handling with automatic recovery
+### Step 1: Install the Add-on in Home Assistant
 
-## Prerequisites
+1. **Add the Repository**
+   - Open Home Assistant
+   - Navigate to **Settings** → **Add-ons** → **Add-on Store**
+   - Click the **⋮** (3-dot menu) → **Repositories**
+   - Add this repository URL: `https://github.com/yourusername/homeassistant-mcp-server`
+   - Click **Add** → **Close**
 
-- Node.js 18+ 
-- Home Assistant instance with WebSocket API enabled
-- Long-lived access token from Home Assistant
-- Claude Desktop application
+2. **Install the Add-on**
+   - In the Add-on Store, scroll to find "Claude MCP Server"
+   - Click on it, then click **Install**
+   - Wait for installation to complete
 
-## Installation
+### Step 2: Configure the Add-on
 
-1. Clone or download this repository:
-```bash
-git clone <repository-url>
-cd HA_MCP
-```
+1. **Start the Add-on**
+   - After installation, stay on the add-on page
+   - Toggle **Start on boot** to ON (recommended)
+   - Click **START**
 
-2. Install dependencies:
-```bash
-npm install
-```
+2. **Configure Settings** (optional)
+   - In the Configuration tab, you can set:
+     - `external_access_token`: Optional security token for Claude Desktop
+     - `log_level`: Set to "debug" for troubleshooting
+   - Click **SAVE** if you make changes
 
-3. Build the TypeScript code:
-```bash
-npm run build
-```
+3. **Verify it's Running**
+   - Check the **Log** tab - you should see:
+     ```
+     [MCP Server] Listening on port 6789
+     [MCP Server] Ready for Claude Desktop connections
+     ```
 
-4. Configure environment variables:
-```bash
-cp .env.example .env
-```
+### Step 3: Get Your Home Assistant Token
 
-Edit `.env` file with your Home Assistant details:
-```env
-HOMEASSISTANT_URL=ws://localhost:8123/api/websocket
-HOMEASSISTANT_TOKEN=your_long_lived_access_token_here
-```
+1. **Create a Long-Lived Access Token**
+   - In Home Assistant, click your profile (bottom left)
+   - Scroll down to **Long-Lived Access Tokens**
+   - Click **Create Token**
+   - Name it "Claude MCP" and click **OK**
+   - **Copy the token immediately** (you won't see it again!)
 
-### Getting a Long-Lived Access Token
+### Step 4: Configure Claude Desktop
 
-1. Open Home Assistant web interface
-2. Click on your profile (bottom left)
-3. Scroll down to "Long-Lived Access Tokens"
-4. Click "Create Token"
-5. Give it a name (e.g., "MCP Server")
-6. Copy the token and save it in your `.env` file
+1. **Download the Client Script**
+   - Save [claude-desktop-client.js](https://raw.githubusercontent.com/yourusername/homeassistant-mcp-server/main/claude-desktop-client.js) to your computer
+   - Remember the full path (e.g., `/Users/you/claude-desktop-client.js`)
 
-## Configuration for Claude Desktop
-
-Add the following to your Claude Desktop configuration file:
-
-### macOS/Linux
-Location: `~/Library/Application Support/Claude/claude_desktop_config.json`
-
-### Windows
-Location: `%APPDATA%\Claude\claude_desktop_config.json`
+2. **Edit Claude Desktop Configuration**
+   - Open Claude Desktop settings
+   - Find and edit `claude_desktop_config.json`
+   - Add this configuration:
 
 ```json
 {
   "mcpServers": {
     "homeassistant": {
       "command": "node",
-      "args": ["/absolute/path/to/HA_MCP/dist/index.js"],
+      "args": ["/path/to/claude-desktop-client.js"],
       "env": {
-        "HOMEASSISTANT_URL": "ws://localhost:8123/api/websocket",
-        "HOMEASSISTANT_TOKEN": "your_long_lived_access_token_here"
+        "HOMEASSISTANT_HOST": "YOUR_HA_IP_ADDRESS",
+        "HOMEASSISTANT_PORT": "6789",
+        "HOMEASSISTANT_TOKEN": "YOUR_LONG_LIVED_TOKEN"
       }
     }
   }
 }
 ```
 
-## Available Tools
+Replace:
+- `/path/to/claude-desktop-client.js` with your actual file path
+- `YOUR_HA_IP_ADDRESS` with your Home Assistant IP (e.g., `192.168.1.100`)
+- `YOUR_LONG_LIVED_TOKEN` with the token from Step 3
 
-### Entity Management
+3. **Restart Claude Desktop**
+   - Completely quit Claude Desktop
+   - Start it again
+   - The MCP server should now be connected!
 
-- **`get_entities`**: List all entities with optional filtering by domain, area, device, or state
-- **`get_entity_state`**: Get detailed state and attributes of a specific entity
+## ✅ Testing Your Setup
 
-### Service Execution
+Ask Claude:
+- "What Home Assistant entities do I have?"
+- "Turn on the living room lights"
+- "What's the temperature in the bedroom?"
+- "Show me all my areas and devices"
 
-- **`call_service`**: Call any Home Assistant service with data and target specification
-- **`fire_event`**: Fire custom events in Home Assistant
+## 🛠️ Available Tools
 
-### System Information
+Claude can now:
+- **get_entities** - List and filter all your entities
+- **get_entity_state** - Check any entity's current state
+- **call_service** - Execute any Home Assistant service
+- **get_areas** - List all configured areas
+- **get_devices** - List all devices
+- **get_services** - See available services
+- **subscribe_events** - Monitor real-time events
+- And more!
 
-- **`get_areas`**: List all configured areas
-- **`get_devices`**: List all devices with optional area filtering
-- **`get_services`**: List available services with their parameters
-- **`get_config`**: Get Home Assistant configuration
+## 🔧 Troubleshooting
 
-### Event Management
+### Add-on Won't Start
+- Check the add-on logs for errors
+- Ensure port 6789 is not used by another add-on
+- Verify Home Assistant API is enabled
 
-- **`subscribe_events`**: Subscribe to specific or all Home Assistant events
+### Claude Can't Connect
+- Verify your Home Assistant IP address is correct
+- Check if port 6789 is accessible from your computer
+- Try using IP address instead of hostname
+- Ensure the long-lived token is valid
 
-### Configuration Management
+### Connection Refused
+- Make sure the add-on is running (green "Running" status)
+- Check your firewall settings
+- Verify the IP and port in Claude Desktop config
 
-- **`validate_config`**: Validate automation configurations
-- **`reload_config`**: Reload specific configuration types
-- **`restart_homeassistant`**: Restart Home Assistant (with optional safe mode)
+### Authentication Failed
+- Double-check your long-lived access token
+- Create a new token if the current one isn't working
+- Ensure no extra spaces in the token
 
-## Usage Examples
+## 📋 Configuration Options
 
-Once configured in Claude Desktop, you can interact with Home Assistant:
+### Add-on Configuration
+- `external_access_token`: (Optional) Additional security token
+- `log_level`: debug, info, warning, or error
+- `enable_debug`: Enable verbose debugging
 
-### Example Prompts
+### Network Requirements
+- Port 6789 must be accessible from your Claude Desktop machine
+- No SSL/HTTPS required (runs on local network)
+- Works with Home Assistant Cloud or local instance
 
-1. **"Show me all lights that are currently on"**
-   - Uses `get_entities` with domain and state filters
+## 🔒 Security Notes
 
-2. **"Turn off all lights in the living room"**
-   - Uses `call_service` with area targeting
+- The MCP server only exposes what your access token permits
+- Runs isolated in a Docker container
+- Only accessible on your local network
+- Optional additional authentication token for extra security
 
-3. **"What's the current temperature from the bedroom sensor?"**
-   - Uses `get_entity_state` to retrieve sensor data
+## 📝 Examples
 
-4. **"Create an automation that turns on lights at sunset"**
-   - Uses `validate_config` to verify automation configuration
-
-5. **"Subscribe to motion sensor events"**
-   - Uses `subscribe_events` for real-time monitoring
-
-## Resources
-
-The server also provides MCP resources for direct data access:
-
-- `ha://entities` - All entity states
-- `ha://services` - Available services
-- `ha://areas` - Configured areas
-- `ha://devices` - All devices
-- `ha://config` - System configuration
-
-## Development
-
-### Running in Development Mode
-
-```bash
-npm run dev
+### Turn on a Light
+```
+You: Turn on the living room light
+Claude: I'll turn on the living room light for you.
+[Claude uses call_service tool with light.turn_on]
 ```
 
-### Building
-
-```bash
-npm run build
+### Check Temperature
+```
+You: What's the current temperature in the bedroom?
+Claude: Let me check the bedroom temperature sensor.
+[Claude uses get_entity_state tool]
+The bedroom temperature is currently 72°F.
 ```
 
-### Project Structure
-
+### Complex Automation
 ```
-HA_MCP/
-├── src/
-│   ├── index.ts           # Main MCP server implementation
-│   ├── websocket-client.ts # WebSocket client with reconnection logic
-│   ├── tools.ts           # Tool definitions
-│   └── types.ts           # TypeScript type definitions
-├── dist/                  # Compiled JavaScript (generated)
-├── package.json          # Dependencies and scripts
-├── tsconfig.json         # TypeScript configuration
-├── .env.example          # Environment variables template
-└── README.md            # This file
+You: Turn off all lights except the bedroom, and set the thermostat to 68
+Claude: I'll help you with that. Let me:
+1. Turn off all lights except the bedroom
+2. Set the thermostat to 68°F
+[Claude uses multiple call_service tools]
 ```
 
-## Troubleshooting
+## 🤝 Contributing
 
-### Connection Issues
+Issues and PRs welcome at: https://github.com/yourusername/homeassistant-mcp-server
 
-1. Verify Home Assistant is accessible at the configured URL
-2. Ensure the access token is valid and not expired
-3. Check firewall settings allow WebSocket connections
-4. For SSL connections, ensure certificates are valid
+## 📄 License
 
-### Common Errors
-
-- **"Authentication failed"**: Check your access token
-- **"Connection timeout"**: Verify Home Assistant URL and network connectivity
-- **"Entity not found"**: Ensure entity_id is correct and entity exists
-
-### Debug Mode
-
-Set the log level in your environment:
-```env
-LOG_LEVEL=debug
-```
-
-## Security Considerations
-
-- Store access tokens securely (use `.env` file, never commit to version control)
-- Use SSL/TLS for remote connections (`wss://` instead of `ws://`)
-- Regularly rotate access tokens
-- Limit token permissions if possible
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit issues and pull requests.
-
-## License
-
-MIT License - see LICENSE file for details
-
-## Support
-
-For issues related to:
-- MCP Server: Open an issue in this repository
-- Home Assistant: Visit [Home Assistant Community](https://community.home-assistant.io/)
-- Claude Desktop: Contact Anthropic support
+MIT License - See LICENSE file for details

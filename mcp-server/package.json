@@ -9,8 +9,10 @@
   },
   "scripts": {
     "build": "tsc",
+    "build:addon": "tsc && cp src/index-addon.ts dist/index-addon.js",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
+    "start:addon": "node dist/index-addon.js",
     "clean": "rm -rf dist",
     "prepare": "npm run build"
   },

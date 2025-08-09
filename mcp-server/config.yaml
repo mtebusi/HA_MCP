@@ -1,0 +1,34 @@
+name: "Claude MCP Server"
+version: "1.0.0"
+slug: "claude_mcp_server"
+description: "Model Context Protocol server enabling Claude AI to control Home Assistant"
+url: "https://github.com/yourusername/homeassistant-mcp-server"
+arch:
+  - armhf
+  - armv7
+  - aarch64
+  - amd64
+  - i386
+init: false
+map:
+  - config:rw
+  - ssl:ro
+options:
+  external_access_token: ""
+  log_level: "info"
+  enable_debug: false
+schema:
+  external_access_token: "str"
+  log_level: list(debug|info|warning|error)?
+  enable_debug: bool
+ports:
+  6789/tcp: 6789
+ports_description:
+  6789/tcp: "MCP Server endpoint for Claude Desktop"
+host_network: false
+homeassistant_api: true
+auth_api: true
+ingress: false
+panel_icon: mdi:robot
+startup: application
+boot: auto
