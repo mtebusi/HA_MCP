@@ -21,18 +21,48 @@
 
 **Control your Home Assistant smart home with Claude AI using natural language.** This add-on implements the Model Context Protocol (MCP) to give Claude Desktop direct, secure access to your Home Assistant instance. Turn lights on/off, create automations, debug issues, analyze energy usage, and manage your entire smart home through conversational AI.
 
-## 🌟 Key Features
+## Table of Contents
 
-- **🗣️ Natural Language Control** - Talk to Claude like a human to control devices
-- **🔧 40+ Operations** - Query states, call services, create automations, analyze patterns
-- **🔒 Enterprise Security** - AppArmor, rate limiting, input sanitization, entity filtering
-- **⚡ Real-time Updates** - WebSocket connection for instant state changes
-- **🏗️ Multi-Architecture** - Supports ARM, AMD64, and i386 platforms
-- **🚀 Easy Installation** - One-click add to Home Assistant
+- [Key Features](#key-features)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+  - [One-Click Install](#one-click-install)
+  - [Manual Installation](#manual-installation)
+- [Configuration](#configuration)
+  - [Add-on Setup](#add-on-setup)
+  - [Claude Desktop Setup](#claude-desktop-setup)
+- [Usage](#usage)
+  - [Available Tools](#available-tools)
+  - [Example Commands](#example-commands)
+- [Documentation](#documentation)
+- [Security](#security)
+- [Troubleshooting](#troubleshooting)
+- [Support](#support)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Key Features
+
+- **Natural Language Control** - Talk to Claude like a human to control devices
+- **40+ Operations** - Query states, call services, create automations, analyze patterns
+- **Enterprise Security** - AppArmor, rate limiting, input sanitization, entity filtering
+- **Real-time Updates** - WebSocket connection for instant state changes
+- **Multi-Architecture** - Supports ARM, AMD64, and i386 platforms
+- **Easy Installation** - One-click add to Home Assistant
+
+## Quick Start
+
+Get up and running in 5 minutes:
+
+1. **Add Repository** - Click the "Add to Home Assistant" button above
+2. **Install Add-on** - Find "MCP Server for Claude" in your Add-on Store
+3. **Configure** - Set your access token and preferences
+4. **Connect Claude** - Add the configuration to Claude Desktop
+5. **Start Using** - Ask Claude to control your smart home!
 
 ## Installation
 
-### Quick Install
+### One-Click Install
 
 [![Add to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fmtebusi%2FHA_MCP)
 
@@ -66,9 +96,13 @@ Click the button above to automatically add this repository to your Home Assista
 
 4. Start the add-on and enable **Start on boot**
 
-### Claude Desktop Configuration
+### Claude Desktop Setup
 
-1. **Configure Claude Desktop**
+1. **Get Your Supervisor Token**
+   
+   Navigate to your Home Assistant profile and create a long-lived access token.
+
+2. **Configure Claude Desktop**
    
    Edit `claude_desktop_config.json`:
    - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
@@ -96,13 +130,15 @@ Click the button above to automatically add this repository to your Home Assista
    }
    ```
 
-2. **Restart Claude Desktop**
+3. **Restart Claude Desktop**
 
-## Available Tools
+## Usage
+
+### Available Tools
 
 The MCP server provides 4 main tools with multiple operations:
 
-### 🔍 Query Tool
+#### Query Tool
 Read information from Home Assistant:
 - `entities` - List and filter entities
 - `state` - Get entity states
@@ -116,7 +152,7 @@ Read information from Home Assistant:
 - `addons` - Installed add-ons
 - `logs` - System logs
 
-### 🎮 Control Tool
+#### Control Tool
 Execute actions in Home Assistant:
 - `call_service` - Call any service
 - `toggle` - Toggle entities
@@ -128,7 +164,7 @@ Execute actions in Home Assistant:
 - `backup_create` - Create backups
 - `recorder_purge` - Purge recorder data
 
-### 📊 Monitor Tool
+#### Monitor Tool
 Real-time monitoring and events:
 - `subscribe` - Subscribe to events
 - `unsubscribe` - Unsubscribe from events
@@ -138,7 +174,7 @@ Real-time monitoring and events:
 - `trace_automation` - Debug automations
 - `websocket_commands` - Raw WebSocket commands
 
-### 🤖 Assist Tool
+#### Assist Tool
 AI-enhanced operations:
 - `suggest_automation` - Automation suggestions
 - `analyze_patterns` - Pattern analysis
@@ -152,28 +188,28 @@ AI-enhanced operations:
 - `migration_check` - Migration assistance
 - `blueprint_import` - Import blueprints
 
-## 💬 Example Commands
+### Example Commands
 
 Ask Claude natural language questions and commands like:
 
-### 🏠 Device Control
+#### Device Control
 - *"Turn off all the lights in the bedroom"*
 - *"Set the thermostat to 72 degrees"*
 - *"Lock all doors and arm the security system"*
 - *"Is the garage door open?"*
 
-### 🤖 Automation Creation
+#### Automation Creation
 - *"Create an automation that dims lights when I start watching TV"*
 - *"Set up a morning routine that gradually turns on lights"*
 - *"Alert me if any door is left open for more than 5 minutes"*
 
-### 📊 Analysis & Optimization
+#### Analysis & Optimization
 - *"Which devices are using the most energy?"*
 - *"Show me patterns in my heating usage"*
 - *"Are there any devices that are unavailable?"*
 - *"Optimize my automations for energy savings"*
 
-### 🔍 Troubleshooting
+#### Troubleshooting Tasks
 - *"Why didn't my motion sensor trigger last night?"*
 - *"Debug my sunrise automation"*
 - *"What events fired in the last hour?"*
@@ -188,22 +224,45 @@ Ask Claude natural language questions and commands like:
 - **Authentication**: Token-based with timeout
 - **Filtering**: Entity-level access control
 
+## Documentation
+
+- **[API Reference](mcp-server/API.md)** - Complete MCP tools documentation
+- **[Configuration Guide](CONFIGURATION.md)** - Detailed configuration options
+- **[Usage Guide](USAGE_GUIDE.md)** - Examples and best practices
+- **[Architecture](ARCHITECTURE.md)** - System design and components
+- **[Troubleshooting](mcp-server/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Security](mcp-server/SECURITY.md)** - Security guidelines and best practices
+- **[Development](DEVELOPMENT.md)** - Contributing and development setup
+- **[Changelog](mcp-server/CHANGELOG.md)** - Version history and updates
+
 ## Troubleshooting
 
-### Add-on Issues
-- Check logs in the add-on page
-- Verify port availability
-- Ensure Home Assistant API is enabled
+### Common Issues
 
-### Connection Problems
-- Verify IP address and port
-- Check authentication token
-- Test network connectivity
+#### Add-on Won't Start
+- Check the add-on logs for specific errors
+- Verify port 6789 is not in use by another service
+- Ensure Home Assistant API is enabled in your configuration
 
-### Performance
-- Monitor active connections
-- Check entity cache size
-- Review log level settings
+#### Claude Can't Connect
+- Verify the add-on is running (green badge in UI)
+- Check your firewall allows connections on port 6789
+- Ensure the access token matches exactly (no extra spaces)
+- Confirm Docker is running on your system
+
+#### Commands Fail or Timeout
+- Check the add-on logs for detailed error messages
+- Verify the entity exists and is available
+- Some services may require additional permissions
+- Check if the integration is properly loaded
+
+#### Performance Issues
+- Monitor the number of active connections
+- Reduce log level from `debug` to `info`
+- Enable entity filtering to reduce data transfer
+- Check system resources (CPU, memory)
+
+For detailed troubleshooting, see the [full troubleshooting guide](mcp-server/TROUBLESHOOTING.md).
 
 ## Development
 
@@ -229,10 +288,22 @@ npm run build
 
 ## Support
 
-- [Issues](https://github.com/mtebusi/HA_MCP/issues)
-- [Discussions](https://github.com/mtebusi/HA_MCP/discussions)
+- **[GitHub Issues](https://github.com/mtebusi/HA_MCP/issues)** - Report bugs and request features
+- **[Discussions](https://github.com/mtebusi/HA_MCP/discussions)** - Ask questions and share ideas
+- **[Community Forum](https://community.home-assistant.io/)** - Home Assistant community support
+- **[Discord](https://discord.gg/home-assistant)** - Real-time chat with the community
 
-## 🔧 Compatibility
+## Contributing
+
+We welcome contributions! Please see our [Development Guide](DEVELOPMENT.md) for details on:
+
+- Setting up your development environment
+- Running tests
+- Submitting pull requests
+- Code style guidelines
+- Adding new features
+
+## Compatibility
 
 - **Home Assistant**: 2024.10.0 or newer
 - **Claude Desktop**: Latest version with MCP support
@@ -240,7 +311,7 @@ npm run build
 - **Operating Systems**: HassOS, Debian, Ubuntu, Alpine Linux
 - **Integrations**: Works with all Home Assistant integrations
 
-## 📚 Related Projects
+## Related Projects
 
 - [Model Context Protocol](https://github.com/anthropics/mcp) - The protocol specification
 - [Home Assistant](https://www.home-assistant.io/) - Open source home automation

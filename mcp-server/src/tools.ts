@@ -9,6 +9,73 @@ import { Tool } from '@modelcontextprotocol/sdk/types.js';
  * Built by HA nerds, for HA nerds.
  */
 
+// Input validation helpers
+const ENTITY_ID_REGEX = /^[a-z0-9_]+(\.[a-z0-9_]+)+$/;
+
+function validateEntityId(entityId: string): boolean {
+  return ENTITY_ID_REGEX.test(entityId);
+}
+
+function sanitizeHtml(input: string): string {
+  // Remove script tags and other potentially dangerous HTML
+  return input
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+    .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '')
+    .replace(/<embed\b[^<]*(?:(?!<\/embed>)<[^<]*)*<\/embed>/gi, '')
+    .replace(/on\w+\s*=\s*"[^"]*"/gi, '') // Remove event handlers
+    .replace(/on\w+\s*=\s*'[^']*'/gi, '')
+    .replace(/javascript:/gi, '');
+}
+
+function sanitizeInput(data: any): any {
+  if (typeof data === 'string') {
+    return sanitizeHtml(data);
+  }
+  if (Array.isArray(data)) {
+    return data.map(sanitizeInput);
+  }
+  if (data && typeof data === 'object') {
+    const sanitized: any = {};
+    for (const [key, value] of Object.entries(data)) {
+      sanitized[key] = sanitizeInput(value);
+    }
+    return sanitized;
+  }
+  return data;
+}
+
+// Error handling wrapper with retry logic
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  delayMs: number = 1000
+): Promise<T> {
+  let lastError: Error | undefined;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+      
+      // Don't retry on validation errors
+      if (error.message?.includes('required') || 
+          error.message?.includes('Invalid') ||
+          error.message?.includes('Access denied')) {
+        throw error;
+      }
+      
+      // Exponential backoff
+      if (attempt < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, delayMs * Math.pow(2, attempt)));
+      }
+    }
+  }
+  
+  throw lastError || new Error('Operation failed after retries');
+}
+
 export const MCP_TOOLS: Tool[] = [
   {
     name: 'query',
@@ -309,6 +376,12 @@ export const TOOL_HANDLERS: Record<string, Record<string, Function>> = {
       if (!args.entity_id) {
         throw new Error('entity_id required');
       }
+      
+      // Validate entity ID format
+      if (!validateEntityId(args.entity_id)) {
+        throw new Error(`Invalid entity_id format: ${args.entity_id}`);
+      }
+      
       const states = await ws.getStates();
       const entity = states.find((e: any) => e.entity_id === args.entity_id);
       if (!entity) {
@@ -352,8 +425,33 @@ export const TOOL_HANDLERS: Record<string, Record<string, Function>> = {
       return ws.callService('system_log', 'list', { domain }, {});
     },
 
-    history: async () => {
-      return { message: 'History requires HTTP API integration' };
+    history: async (ws: any, args: any) => {
+      // TODO: Implement HTTP API integration for history
+      // For now, use WebSocket command if available
+      if (!args.entity_id) {
+        throw new Error('entity_id required for history query');
+      }
+      
+      const command: any = {
+        type: 'history/history_during_period',
+        entity_ids: Array.isArray(args.entity_id) ? args.entity_id : [args.entity_id]
+      };
+      
+      if (args.start_time) command.start_time = args.start_time;
+      if (args.end_time) command.end_time = args.end_time;
+      if (args.minimal_response !== undefined) command.minimal_response = args.minimal_response;
+      if (args.no_attributes !== undefined) command.no_attributes = args.no_attributes;
+      
+      try {
+        return await ws.sendCommand(command);
+      } catch (error) {
+        // Fallback message if command not available
+        return { 
+          message: 'History API not available via WebSocket',
+          error: error.message,
+          fallback: 'HTTP API integration required for full history support'
+        };
+      }
     }
   },
   
@@ -362,7 +460,26 @@ export const TOOL_HANDLERS: Record<string, Record<string, Function>> = {
       if (!args.domain || !args.service) {
         throw new Error('domain and service required');
       }
-      return ws.callService(args.domain, args.service, args.data || {}, args.target || {});
+      
+      // Sanitize service data to prevent XSS
+      const sanitizedData = args.data ? sanitizeInput(args.data) : {};
+      
+      // Validate entity IDs in target
+      if (args.target?.entity_id) {
+        const entityIds = Array.isArray(args.target.entity_id) 
+          ? args.target.entity_id 
+          : [args.target.entity_id];
+        
+        for (const id of entityIds) {
+          if (!validateEntityId(id)) {
+            throw new Error(`Invalid entity_id format: ${id}`);
+          }
+        }
+      }
+      
+      return withRetry(() => 
+        ws.callService(args.domain, args.service, sanitizedData, args.target || {})
+      );
     },
 
     toggle: async (ws: any, args: any) => {

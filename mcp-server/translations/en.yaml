@@ -1,7 +1,7 @@
 configuration:
   port:
     name: Server Port
-    description: TCP port for MCP server connections
+    description: TCP port for MCP server connections from Claude Desktop
   authentication_required:
     name: Authentication Required
     description: Require access token for external connections
@@ -14,5 +14,17 @@ configuration:
   connection_timeout:
     name: Connection Timeout
     description: Time in seconds to wait for authentication
+  max_clients:
+    name: Maximum Clients
+    description: Maximum number of simultaneous Claude Desktop connections
+  enable_entity_filtering:
+    name: Enable Entity Filtering
+    description: Enable filtering of entities by domain or entity ID
+  allowed_domains:
+    name: Allowed Domains
+    description: List of entity domains to expose (e.g., light, switch, sensor)
+  blocked_entities:
+    name: Blocked Entities
+    description: List of specific entity IDs to block from Claude access
 network:
   6789/tcp: MCP Server endpoint for Claude Desktop

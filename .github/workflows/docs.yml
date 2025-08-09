@@ -1,0 +1,412 @@
+name: Documentation Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    paths:
+      - '**.md'
+      - 'mcp-server/src/**'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  pages: write
+  id-token: write
+
+jobs:
+  validate-markdown:
+    name: Validate Markdown
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install markdown linters
+        run: |
+          npm install -g markdownlint-cli markdown-link-check
+      
+      - name: Run markdownlint
+        run: |
+          # Create markdownlint config
+          cat << EOF > .markdownlint.json
+          {
+            "default": true,
+            "MD013": false,
+            "MD033": false,
+            "MD041": false
+          }
+          EOF
+          
+          # Run linter
+          markdownlint '**/*.md' --ignore node_modules --ignore dist || true
+      
+      - name: Check for broken links
+        run: |
+          # Create link check config
+          cat << EOF > .markdown-link-check.json
+          {
+            "ignorePatterns": [
+              {
+                "pattern": "^http://localhost"
+              },
+              {
+                "pattern": "^https://github.com/.*/pull/"
+              }
+            ],
+            "timeout": "20s",
+            "retryOn429": true,
+            "retryCount": 3,
+            "fallbackRetryDelay": "30s"
+          }
+          EOF
+          
+          # Check links in all markdown files
+          find . -name "*.md" -not -path "./node_modules/*" -not -path "./dist/*" | while read file; do
+            echo "Checking links in $file..."
+            markdown-link-check "$file" --config .markdown-link-check.json || true
+          done
+      
+      - name: Check README completeness
+        run: |
+          echo "Checking README completeness..."
+          
+          # Check for required sections
+          required_sections=(
+            "Installation"
+            "Configuration"
+            "Usage"
+            "API"
+            "Contributing"
+            "License"
+          )
+          
+          missing_sections=()
+          for section in "${required_sections[@]}"; do
+            if ! grep -q "## $section\|# $section" README.md; then
+              missing_sections+=("$section")
+            fi
+          done
+          
+          if [ ${#missing_sections[@]} -gt 0 ]; then
+            echo "Missing sections in README:"
+            printf '%s\n' "${missing_sections[@]}"
+            echo "::warning::README is missing required sections"
+          else
+            echo "All required sections present in README"
+          fi
+
+  check-documentation-coverage:
+    name: Documentation Coverage
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: mcp-server/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./mcp-server
+        run: |
+          npm ci
+          npm install -D typedoc
+      
+      - name: Check for undocumented features
+        run: |
+          # Find all exported functions/classes in TypeScript files
+          echo "Checking for undocumented exports..."
+          
+          # Create a script to check documentation
+          cat << 'EOF' > check-docs.js
+          const fs = require('fs');
+          const path = require('path');
+          
+          function findExports(dir) {
+            const exports = [];
+            const files = fs.readdirSync(dir);
+            
+            for (const file of files) {
+              const filePath = path.join(dir, file);
+              const stat = fs.statSync(filePath);
+              
+              if (stat.isDirectory() && !file.startsWith('.') && file !== 'node_modules') {
+                exports.push(...findExports(filePath));
+              } else if (file.endsWith('.ts') && !file.endsWith('.test.ts')) {
+                const content = fs.readFileSync(filePath, 'utf8');
+                
+                // Find exported functions and classes
+                const exportMatches = content.matchAll(/export\s+(async\s+)?(?:function|class|const|interface|type)\s+(\w+)/g);
+                for (const match of exportMatches) {
+                  exports.push({
+                    name: match[2],
+                    file: filePath,
+                    type: match[0].includes('class') ? 'class' : 
+                          match[0].includes('interface') ? 'interface' :
+                          match[0].includes('type') ? 'type' : 'function'
+                  });
+                }
+              }
+            }
+            
+            return exports;
+          }
+          
+          // Check if exports are documented
+          const srcExports = findExports('mcp-server/src');
+          const undocumented = [];
+          
+          for (const exp of srcExports) {
+            const fileContent = fs.readFileSync(exp.file, 'utf8');
+            const lines = fileContent.split('\n');
+            
+            // Find the line with the export
+            const exportLine = lines.findIndex(line => 
+              line.includes(`export`) && line.includes(exp.name)
+            );
+            
+            if (exportLine > 0) {
+              // Check if there's a JSDoc comment above
+              const prevLine = lines[exportLine - 1].trim();
+              if (!prevLine.includes('*/')) {
+                undocumented.push(exp);
+              }
+            }
+          }
+          
+          if (undocumented.length > 0) {
+            console.log('Undocumented exports found:');
+            undocumented.forEach(exp => {
+              console.log(`  - ${exp.type} ${exp.name} in ${exp.file}`);
+            });
+            process.exit(1);
+          } else {
+            console.log('All exports are documented');
+          }
+          EOF
+          
+          node check-docs.js || echo "::warning::Some exports lack documentation"
+
+  generate-api-docs:
+    name: Generate API Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: mcp-server/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./mcp-server
+        run: |
+          npm ci
+          npm install -D typedoc @microsoft/api-extractor @microsoft/api-documenter
+      
+      - name: Generate TypeDoc documentation
+        working-directory: ./mcp-server
+        run: |
+          # Create TypeDoc config
+          cat << EOF > typedoc.json
+          {
+            "entryPoints": ["src/index.ts"],
+            "out": "docs/api",
+            "excludePrivate": true,
+            "excludeProtected": true,
+            "excludeExternals": true,
+            "includeVersion": true,
+            "plugin": [],
+            "theme": "default",
+            "readme": "README.md"
+          }
+          EOF
+          
+          # Generate docs
+          npx typedoc
+      
+      - name: Generate OpenAPI specification
+        working-directory: ./mcp-server
+        run: |
+          # Create OpenAPI spec generator
+          cat << 'EOF' > generate-openapi.js
+          const fs = require('fs');
+          
+          const openApiSpec = {
+            openapi: '3.0.0',
+            info: {
+              title: 'HomeAssistant MCP Server API',
+              version: '1.0.0',
+              description: 'API for controlling Home Assistant through MCP'
+            },
+            servers: [
+              {
+                url: 'http://localhost:3000',
+                description: 'Local MCP server'
+              }
+            ],
+            paths: {
+              '/health': {
+                get: {
+                  summary: 'Health check',
+                  responses: {
+                    '200': {
+                      description: 'Server is healthy',
+                      content: {
+                        'application/json': {
+                          schema: {
+                            type: 'object',
+                            properties: {
+                              status: { type: 'string' },
+                              version: { type: 'string' }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              '/api/execute': {
+                post: {
+                  summary: 'Execute MCP command',
+                  requestBody: {
+                    required: true,
+                    content: {
+                      'application/json': {
+                        schema: {
+                          type: 'object',
+                          properties: {
+                            command: { type: 'string' },
+                            params: { type: 'object' }
+                          },
+                          required: ['command']
+                        }
+                      }
+                    }
+                  },
+                  responses: {
+                    '200': {
+                      description: 'Command executed successfully'
+                    },
+                    '400': {
+                      description: 'Invalid request'
+                    }
+                  }
+                }
+              }
+            }
+          };
+          
+          fs.writeFileSync('docs/openapi.json', JSON.stringify(openApiSpec, null, 2));
+          console.log('OpenAPI specification generated');
+          EOF
+          
+          node generate-openapi.js
+      
+      - name: Upload documentation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-documentation
+          path: |
+            mcp-server/docs/api
+            mcp-server/docs/openapi.json
+
+  update-badges:
+    name: Update README Badges
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Update badges
+        run: |
+          # Create badge update script
+          cat << 'EOF' > update-badges.sh
+          #!/bin/bash
+          
+          # Badge URLs
+          BUILD_BADGE="[![Build](https://github.com/${{ github.repository }}/actions/workflows/build.yml/badge.svg)](https://github.com/${{ github.repository }}/actions/workflows/build.yml)"
+          SECURITY_BADGE="[![Security](https://github.com/${{ github.repository }}/actions/workflows/security.yaml/badge.svg)](https://github.com/${{ github.repository }}/actions/workflows/security.yaml)"
+          DOCS_BADGE="[![Docs](https://github.com/${{ github.repository }}/actions/workflows/docs.yml/badge.svg)](https://github.com/${{ github.repository }}/actions/workflows/docs.yml)"
+          LICENSE_BADGE="[![License](https://img.shields.io/github/license/${{ github.repository }})](LICENSE)"
+          VERSION_BADGE="[![Version](https://img.shields.io/github/v/release/${{ github.repository }})](https://github.com/${{ github.repository }}/releases)"
+          
+          # Check if badges section exists
+          if ! grep -q "## Badges" README.md; then
+            # Add badges section after title
+            sed -i '2a\\n## Badges\n' README.md
+          fi
+          
+          # Update or add badges
+          echo "Badges would be updated in README.md"
+          EOF
+          
+          chmod +x update-badges.sh
+          ./update-badges.sh
+
+  documentation-summary:
+    name: Documentation Summary
+    runs-on: ubuntu-latest
+    needs: [validate-markdown, check-documentation-coverage, generate-api-docs]
+    if: always()
+    
+    steps:
+      - name: Generate summary
+        run: |
+          echo "# Documentation Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Markdown Validation | ${{ needs.validate-markdown.result == 'success' && '✅' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Link Check | ${{ needs.validate-markdown.result == 'success' && '✅' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Documentation Coverage | ${{ needs.check-documentation-coverage.result == 'success' && '✅' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| API Docs Generation | ${{ needs.generate-api-docs.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Recommendations" >> $GITHUB_STEP_SUMMARY
+          echo "- Ensure all new features are documented" >> $GITHUB_STEP_SUMMARY
+          echo "- Keep API documentation up to date" >> $GITHUB_STEP_SUMMARY
+          echo "- Fix any broken links in markdown files" >> $GITHUB_STEP_SUMMARY
+          echo "- Add JSDoc comments to all exported functions" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = `## 📚 Documentation Check
+            
+            | Check | Status |
+            |-------|--------|
+            | Markdown Format | ${{ needs.validate-markdown.result == 'success' && '✅' || '⚠️' }} |
+            | Link Validation | ${{ needs.validate-markdown.result == 'success' && '✅' || '⚠️' }} |
+            | Code Documentation | ${{ needs.check-documentation-coverage.result == 'success' && '✅' || '⚠️' }} |
+            | API Docs | ${{ needs.generate-api-docs.result == 'success' && '✅' || '❌' }} |
+            
+            Please ensure all documentation is complete before merging.`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

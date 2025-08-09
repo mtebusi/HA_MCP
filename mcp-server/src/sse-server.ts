@@ -1,6 +1,16 @@
-#!/usr/bin/env node
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+/**
+ * SSE/HTTP Server for Claude Desktop Connections
+ * Implements the URL/SSE connection architecture for MCP
+ */
+
+import { createServer, IncomingMessage, ServerResponse } from 'http';
+import { Server as MCPServer } from '@modelcontextprotocol/sdk/server/index.js';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { HomeAssistantWebSocket } from './websocket-client.js';
+import { MCP_TOOLS, TOOL_HANDLERS } from './tools.js';
+import { EntityState } from './types.js';
+import { ResourceManager, CircuitBreaker, CommandQueue } from './resource-manager.js';
+import { TokenManager, InputSanitizer, RateLimiter, SessionManager, AuditLogger } from './security.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -9,28 +19,16 @@ import {
   McpError,
   ErrorCode,
 } from '@modelcontextprotocol/sdk/types.js';
-import { HomeAssistantWebSocket } from './websocket-client.js';
-import { MCP_TOOLS, TOOL_HANDLERS } from './tools.js';
-import { EntityState } from './types.js';
-import { ResourceManager, CircuitBreaker, CommandQueue } from './resource-manager.js';
-import { TokenManager, InputSanitizer, RateLimiter, SessionManager, AuditLogger } from './security.js';
 
-/**
- * Home Assistant MCP Server
- * 
- * Runs as an add-on within Home Assistant, providing MCP protocol
- * access to HA's capabilities through stdio transport.
- */
-class HomeAssistantMCPServer {
-  private server: Server;
+export class HomeAssistantMCPSSEServer {
+  private server: MCPServer;
+  private httpServer: ReturnType<typeof createServer>;
   private ws: HomeAssistantWebSocket;
   private entityCache = new Map<string, EntityState>();
   private entityFilter: { allowed: string[]; blocked: string[] };
   private isShuttingDown = false;
   private cacheTimeout?: NodeJS.Timeout;
-  private readonly CACHE_TTL = 60000; // 60 seconds cache TTL
-  private readonly RATE_LIMIT = 100; // Max requests per minute
-  private readonly RATE_WINDOW = 60000; // 1 minute window
+  private readonly CACHE_TTL = 60000;
   private resourceManager: ResourceManager;
   private circuitBreaker: CircuitBreaker;
   private commandQueue: CommandQueue;
@@ -39,8 +37,14 @@ class HomeAssistantMCPServer {
   private rateLimiter: RateLimiter;
   private sessionManager: SessionManager;
   private auditLogger: AuditLogger;
+  private port: number;
+  private accessToken: string | null;
 
   constructor() {
+    // Get configuration from environment
+    this.port = parseInt(process.env.MCP_PORT || '6789', 10);
+    this.accessToken = process.env.ACCESS_TOKEN || null;
+    
     // Use supervisor proxy for internal API access
     const url = process.env.HOMEASSISTANT_URL || 'ws://supervisor/core/api/websocket';
     const token = process.env.SUPERVISOR_TOKEN;
@@ -56,23 +60,23 @@ class HomeAssistantMCPServer {
     this.sessionManager = new SessionManager();
     this.auditLogger = new AuditLogger();
 
-    // Validate and secure the token (don't log it!)
+    // Validate supervisor token
     if (!this.tokenManager.validateToken(token)) {
       this.auditLogger.log('error', 'Invalid supervisor token format', { tokenLength: token.length });
       throw new Error('Invalid SUPERVISOR_TOKEN format');
     }
 
-    // Parse entity filtering configuration safely
+    // Parse entity filtering configuration
     this.entityFilter = {
       allowed: this.parseJsonConfig(process.env.ALLOWED_DOMAINS, []),
       blocked: this.parseJsonConfig(process.env.BLOCKED_ENTITIES, [])
     };
 
-    console.log('[MCP Server] Initializing Home Assistant connection');
-    console.log(`[MCP Server] Entity filtering: ${this.entityFilter.allowed.length} allowed domains, ${this.entityFilter.blocked.length} blocked entities`);
+    console.log('[MCP SSE Server] Initializing Home Assistant connection');
+    console.log(`[MCP SSE Server] Starting on port ${this.port}`);
 
-    // Initialize MCP server with proper metadata
-    this.server = new Server(
+    // Initialize MCP server
+    this.server = new MCPServer(
       {
         name: 'homeassistant-mcp',
         version: '1.0.5',
@@ -92,24 +96,18 @@ class HomeAssistantMCPServer {
       }
     );
 
-    // Initialize resource management components
-    this.resourceManager = new ResourceManager();
-    this.circuitBreaker = new CircuitBreaker(5, 60000, 30000);
-    this.commandQueue = new CommandQueue(100, 60000);
-    
     // Initialize WebSocket client
     this.ws = new HomeAssistantWebSocket(url, token);
     
-    // Register resources with manager
-    this.resourceManager.registerCache(this.entityCache);
-    this.resourceManager.registerConnection(this.ws);
-    
-    // Setup resource manager event handlers
-    this.setupResourceManagerHandlers();
-    
+    // Initialize resource management
+    this.resourceManager = new ResourceManager();
+    this.circuitBreaker = new CircuitBreaker();
+    this.commandQueue = new CommandQueue();
+
     // Setup handlers
     this.setupHandlers();
     this.setupWebSocketHandlers();
+    this.setupHTTPServer();
   }
 
   private parseJsonConfig(value: string | undefined, defaultValue: any): any {
@@ -117,66 +115,109 @@ class HomeAssistantMCPServer {
     try {
       return JSON.parse(value);
     } catch (error) {
-      console.error(`[MCP Server] Failed to parse JSON config: ${error}`);
+      console.error(`[MCP SSE Server] Failed to parse JSON config: ${error}`);
       return defaultValue;
     }
   }
 
-  private setupResourceManagerHandlers() {
-    this.resourceManager.on('hibernate', ({ connection }) => {
-      console.log('[MCP Server] Entering hibernation mode');
-      // Reduce polling intervals or pause non-essential subscriptions
-    });
-    
-    this.resourceManager.on('wakeup', ({ connection }) => {
-      console.log('[MCP Server] Waking up from hibernation');
-      // Restore full functionality
-      this.fetchInitialData().catch(console.error);
-    });
-    
-    this.resourceManager.on('refresh-data', () => {
-      this.fetchInitialData().catch(console.error);
-    });
-    
-    this.resourceManager.on('clear-rate-limiter', () => {
-      // Clear old rate limiter entries
-      const now = Date.now();
-      for (const [key, limit] of this.rateLimiter.entries()) {
-        if (now > limit.resetTime) {
-          this.rateLimiter.delete(key);
+  private setupHTTPServer() {
+    this.httpServer = createServer((req: IncomingMessage, res: ServerResponse) => {
+      // CORS headers for Claude Desktop
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      
+      // Handle OPTIONS preflight
+      if (req.method === 'OPTIONS') {
+        res.writeHead(204);
+        res.end();
+        return;
+      }
+
+      // Authentication check
+      if (this.accessToken) {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+          res.writeHead(401, { 'Content-Type': 'text/plain' });
+          res.end('Unauthorized: Missing or invalid token');
+          this.auditLogger.log('security', 'Authentication failed', { 
+            ip: req.socket.remoteAddress 
+          });
+          return;
+        }
+
+        const providedToken = authHeader.substring(7);
+        if (providedToken !== this.accessToken) {
+          res.writeHead(401, { 'Content-Type': 'text/plain' });
+          res.end('Unauthorized: Invalid token');
+          this.auditLogger.log('security', 'Invalid token attempt', { 
+            ip: req.socket.remoteAddress 
+          });
+          return;
         }
       }
-    });
-    
-    this.resourceManager.on('stats', (stats) => {
-      // Log resource stats periodically if in debug mode
-      if (process.env.LOG_LEVEL === 'debug') {
-        console.log('[MCP Server] Resource stats:', {
-          memory: `${Math.round(stats.memoryUsage.heapUsed / 1024 / 1024)}MB`,
-          cache: stats.cacheSize,
-          hibernating: stats.isHibernating
+
+      // Rate limiting
+      const clientId = req.socket.remoteAddress || 'unknown';
+      if (!this.rateLimiter.checkLimit(clientId)) {
+        res.writeHead(429, { 'Content-Type': 'text/plain' });
+        res.end('Too Many Requests');
+        this.auditLogger.log('security', 'Rate limit exceeded', { 
+          ip: clientId 
         });
+        return;
+      }
+
+      // Health check endpoint
+      if (req.url === '/health') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          status: 'healthy',
+          version: '1.0.5',
+          websocket: this.ws.isConnected() ? 'connected' : 'disconnected',
+          entities: this.entityCache.size
+        }));
+        return;
+      }
+
+      // SSE endpoint for MCP
+      if (req.url === '/sse' || req.url === '/') {
+        // Create SSE transport for this connection
+        const transport = new SSEServerTransport(req, res);
+        
+        // Connect the transport to our MCP server
+        this.server.connect(transport).catch(error => {
+          console.error('[MCP SSE Server] Failed to connect transport:', error);
+          this.auditLogger.log('error', 'SSE transport connection failed', { 
+            error: error.message 
+          });
+        });
+
+        // Log successful connection
+        this.auditLogger.log('info', 'SSE client connected', { 
+          ip: clientId 
+        });
+      } else {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Not Found');
       }
     });
+
+    this.httpServer.on('error', (error) => {
+      console.error('[MCP SSE Server] HTTP server error:', error);
+      this.auditLogger.log('error', 'HTTP server error', { error: error.message });
+    });
   }
-  
+
   private setupWebSocketHandlers() {
     this.ws.on('connected', async () => {
-      console.log('[MCP Server] Connected to Home Assistant Supervisor API');
+      console.log('[MCP SSE Server] Connected to Home Assistant Supervisor API');
       try {
         await this.subscribeToStateChanges();
         await this.fetchInitialData();
         this.scheduleCacheRefresh();
-        
-        // Process any queued commands
-        if (this.commandQueue.size() > 0) {
-          console.log(`[MCP Server] Processing ${this.commandQueue.size()} queued commands`);
-          await this.commandQueue.processQueue(async (cmd) => {
-            return await cmd.handler(this.ws, cmd.args);
-          });
-        }
       } catch (error) {
-        console.error('[MCP Server] Failed to initialize data:', error);
+        console.error('[MCP SSE Server] Failed to initialize data:', error);
       }
     });
 
@@ -194,12 +235,12 @@ class HomeAssistantMCPServer {
           }
         }
       } catch (error) {
-        console.error('[MCP Server] Error handling state change:', error);
+        console.error('[MCP SSE Server] Error handling state change:', error);
       }
     });
 
     this.ws.on('disconnected', () => {
-      console.log('[MCP Server] Disconnected from Home Assistant');
+      console.log('[MCP SSE Server] Disconnected from Home Assistant');
       if (!this.isShuttingDown) {
         setTimeout(() => {
           this.ws.connect().catch(console.error);
@@ -208,67 +249,8 @@ class HomeAssistantMCPServer {
     });
 
     this.ws.on('error', (error: Error) => {
-      console.error('[MCP Server] WebSocket error:', error.message);
+      console.error('[MCP SSE Server] WebSocket error:', error.message);
     });
-  }
-
-  private scheduleCacheRefresh() {
-    if (this.cacheTimeout) {
-      clearTimeout(this.cacheTimeout);
-    }
-    
-    this.cacheTimeout = setTimeout(() => {
-      if (!this.isShuttingDown) {
-        this.fetchInitialData().catch(console.error);
-        this.scheduleCacheRefresh();
-      }
-    }, this.CACHE_TTL);
-  }
-
-  private isEntityAllowed(entityId: string): boolean {
-    // Check if entity is blocked
-    if (this.entityFilter.blocked.includes(entityId)) {
-      return false;
-    }
-
-    // If allowed list is empty, allow all non-blocked
-    if (this.entityFilter.allowed.length === 0) {
-      return true;
-    }
-
-    // Check if entity domain is in allowed list
-    const domain = entityId.split('.')[0];
-    return this.entityFilter.allowed.includes(domain);
-  }
-
-  private async subscribeToStateChanges(): Promise<void> {
-    try {
-      await this.ws.subscribeEvents('state_changed');
-      console.log('[MCP Server] Subscribed to state changes');
-    } catch (error) {
-      console.error('[MCP Server] Failed to subscribe to state changes:', error);
-      throw error;
-    }
-  }
-
-  private async fetchInitialData(): Promise<void> {
-    try {
-      const states = await this.ws.getStates();
-      
-      // Clear and rebuild cache
-      this.entityCache.clear();
-      
-      states.forEach((state: EntityState) => {
-        if (this.isEntityAllowed(state.entity_id)) {
-          this.entityCache.set(state.entity_id, state);
-        }
-      });
-
-      console.log(`[MCP Server] Cached ${this.entityCache.size} entities`);
-    } catch (error) {
-      console.error('[MCP Server] Failed to fetch initial data:', error);
-      throw error;
-    }
   }
 
   private setupHandlers() {
@@ -313,7 +295,7 @@ class HomeAssistantMCPServer {
       ],
     }));
 
-    // Read resource handler with error boundaries
+    // Read resource handler
     this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
       const { uri } = request.params;
 
@@ -396,7 +378,7 @@ class HomeAssistantMCPServer {
         if (error instanceof McpError) {
           throw error;
         }
-        console.error(`[MCP Server] Resource read error for ${uri}:`, error);
+        console.error(`[MCP SSE Server] Resource read error for ${uri}:`, error);
         throw new McpError(
           ErrorCode.InternalError,
           'Failed to read resource'
@@ -404,16 +386,25 @@ class HomeAssistantMCPServer {
       }
     });
 
-    // Tool execution handler with validation and error boundaries
+    // Tool execution handler
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
 
       try {
-        // Record activity for resource manager
+        // Record activity
         this.resourceManager.recordActivity();
         
         // Check rate limit
-        this.checkRateLimit(name);
+        const sessionId = this.sessionManager.getCurrentSessionId();
+        const identifier = sessionId || name;
+        
+        if (!this.rateLimiter.checkLimit(identifier)) {
+          this.auditLogger.log('security', 'Rate limit exceeded', { tool: name, identifier });
+          throw new McpError(
+            ErrorCode.InvalidRequest,
+            'Rate limit exceeded. Please wait before making more requests.'
+          );
+        }
         
         // Validate tool exists
         const tool = MCP_TOOLS.find(t => t.name === name);
@@ -437,47 +428,38 @@ class HomeAssistantMCPServer {
         }
 
         // Sanitize input arguments
-        const sanitizedArgs = this.sanitizeArgs(args);
+        const sanitized = this.inputSanitizer.sanitizeObject(args);
 
-        // Execute operation with error boundary and circuit breaker
+        // Execute operation
         let result;
         try {
-          if (name === 'query' && ['entities', 'state'].includes(operation as string)) {
-            // Use cached data for entity queries
-            result = await this.handleCachedQuery(operation as string, sanitizedArgs);
-          } else {
-            // Use WebSocket for other operations with circuit breaker
-            result = await this.circuitBreaker.execute(async () => {
-              return await handler(this.ws, sanitizedArgs);
-            });
-          }
-        } catch (operationError: any) {
-          // Check if circuit breaker is open
-          if (operationError.message?.includes('Circuit breaker is open')) {
-            // Try to queue the command for later
-            if (name === 'control') {
-              try {
-                result = await this.commandQueue.enqueue({ handler, args: sanitizedArgs });
-                console.log('[MCP Server] Command queued due to connection issues');
-              } catch (queueError) {
-                throw new McpError(
-                  ErrorCode.InternalError,
-                  'Service temporarily unavailable. Please try again later.'
-                );
-              }
+          result = await this.circuitBreaker.call(async () => {
+            if (name === 'query' && ['entities', 'state'].includes(operation as string)) {
+              return await this.handleCachedQuery(operation as string, sanitized);
             } else {
-              throw new McpError(
-                ErrorCode.InternalError,
-                'Service temporarily unavailable. Please try again later.'
-              );
+              return await handler(this.ws, sanitized);
             }
-          } else {
-            console.error(`[MCP Server] Operation error (${name}.${operation}):`, operationError);
+          });
+        } catch (operationError: any) {
+          console.error(`[MCP SSE Server] Operation error (${name}.${operation}):`, operationError);
+          
+          // Queue command if connection issue
+          if (operationError.message?.includes('WebSocket') || operationError.message?.includes('connection')) {
+            await this.commandQueue.enqueue({
+              tool: name,
+              operation: operation as string,
+              args: sanitized
+            });
             throw new McpError(
               ErrorCode.InternalError,
-              operationError.message || 'Operation failed'
+              'Command queued for execution when connection is restored'
             );
           }
+          
+          throw new McpError(
+            ErrorCode.InternalError,
+            operationError.message || 'Operation failed'
+          );
         }
 
         return {
@@ -492,56 +474,13 @@ class HomeAssistantMCPServer {
         if (error instanceof McpError) {
           throw error;
         }
-        console.error('[MCP Server] Tool execution error:', error);
+        console.error('[MCP SSE Server] Tool execution error:', error);
         throw new McpError(
           ErrorCode.InternalError,
           'An error occurred processing your request'
         );
       }
     });
-  }
-
-  private checkRateLimit(toolName: string): void {
-    // Use the security module's rate limiter
-    const sessionId = this.sessionManager.getCurrentSessionId();
-    const identifier = sessionId || toolName;
-    
-    if (!this.rateLimiter.checkLimit(identifier)) {
-      this.auditLogger.log('security', 'Rate limit exceeded', { tool: toolName, identifier });
-      throw new McpError(
-        ErrorCode.InvalidRequest,
-        'Rate limit exceeded. Please wait before making more requests.'
-      );
-    }
-  }
-
-  private sanitizeArgs(args: any): any {
-    // Use the security module's input sanitizer
-    const sanitized = this.inputSanitizer.sanitizeObject(args);
-    
-    // Additional validation for entity IDs
-    if (args?.entity_id) {
-      const entityId = Array.isArray(args.entity_id) ? args.entity_id : [args.entity_id];
-      for (const id of entityId) {
-        if (typeof id === 'string' && !this.inputSanitizer.validateEntityId(id)) {
-          this.auditLogger.log('security', 'Invalid entity ID attempt', { entityId: id });
-          throw new McpError(ErrorCode.InvalidParams, `Invalid entity ID: ${id}`);
-        }
-      }
-    }
-    
-    // Validate service calls
-    if (args?.domain && args?.service) {
-      if (!this.inputSanitizer.validateServiceCall(args.domain, args.service)) {
-        this.auditLogger.log('security', 'Blocked service call', { 
-          domain: args.domain, 
-          service: args.service 
-        });
-        throw new McpError(ErrorCode.InvalidParams, `Service call not allowed: ${args.domain}.${args.service}`);
-      }
-    }
-    
-    return sanitized;
   }
 
   private async handleCachedQuery(operation: string, args: any): Promise<any> {
@@ -587,18 +526,82 @@ class HomeAssistantMCPServer {
     throw new Error(`Unknown cached query operation: ${operation}`);
   }
 
+  private isEntityAllowed(entityId: string): boolean {
+    // Check if entity is blocked
+    if (this.entityFilter.blocked.includes(entityId)) {
+      return false;
+    }
+
+    // If allowed list is empty, allow all non-blocked
+    if (this.entityFilter.allowed.length === 0) {
+      return true;
+    }
+
+    // Check if entity domain is in allowed list
+    const domain = entityId.split('.')[0];
+    return this.entityFilter.allowed.includes(domain);
+  }
+
+  private async subscribeToStateChanges(): Promise<void> {
+    try {
+      await this.ws.subscribeEvents('state_changed');
+      console.log('[MCP SSE Server] Subscribed to state changes');
+    } catch (error) {
+      console.error('[MCP SSE Server] Failed to subscribe to state changes:', error);
+      throw error;
+    }
+  }
+
+  private async fetchInitialData(): Promise<void> {
+    try {
+      const states = await this.ws.getStates();
+      
+      // Clear and rebuild cache
+      this.entityCache.clear();
+      
+      states.forEach((state: EntityState) => {
+        if (this.isEntityAllowed(state.entity_id)) {
+          this.entityCache.set(state.entity_id, state);
+        }
+      });
+
+      console.log(`[MCP SSE Server] Cached ${this.entityCache.size} entities`);
+    } catch (error) {
+      console.error('[MCP SSE Server] Failed to fetch initial data:', error);
+      throw error;
+    }
+  }
+
+  private scheduleCacheRefresh() {
+    if (this.cacheTimeout) {
+      clearTimeout(this.cacheTimeout);
+    }
+    
+    this.cacheTimeout = setTimeout(() => {
+      if (!this.isShuttingDown) {
+        this.fetchInitialData().catch(console.error);
+        this.scheduleCacheRefresh();
+      }
+    }, this.CACHE_TTL);
+  }
+
   async run() {
     try {
       // Connect to Home Assistant
       await this.ws.connect();
 
-      // Use stdio transport (proper MCP approach)
-      const transport = new StdioServerTransport();
-      await this.server.connect(transport);
-      
-      console.log('[MCP Server] Running with stdio transport');
+      // Start HTTP server
+      this.httpServer.listen(this.port, '0.0.0.0', () => {
+        console.log(`[MCP SSE Server] Server listening on http://0.0.0.0:${this.port}`);
+        console.log('[MCP SSE Server] Claude Desktop can connect to:');
+        console.log(`  Local: http://localhost:${this.port}/sse`);
+        console.log(`  Network: http://<your-ha-ip>:${this.port}/sse`);
+        if (this.accessToken) {
+          console.log('[MCP SSE Server] Authentication is enabled');
+        }
+      });
     } catch (error) {
-      console.error('[MCP Server] Failed to start:', error);
+      console.error('[MCP SSE Server] Failed to start:', error);
       this.cleanup();
       process.exit(1);
     }
@@ -606,6 +609,11 @@ class HomeAssistantMCPServer {
 
   private cleanup() {
     this.isShuttingDown = true;
+    
+    // Close HTTP server
+    if (this.httpServer) {
+      this.httpServer.close();
+    }
     
     // Clear cache timeout
     if (this.cacheTimeout) {
@@ -639,18 +647,18 @@ class HomeAssistantMCPServer {
       this.ws.disconnect();
     }
     
-    console.log('[MCP Server] Cleanup completed');
+    console.log('[MCP SSE Server] Cleanup completed');
   }
 
   shutdown() {
-    console.log('[MCP Server] Shutting down gracefully...');
+    console.log('[MCP SSE Server] Shutting down gracefully...');
     this.cleanup();
     process.exit(0);
   }
 }
 
 // Global server instance
-let server: HomeAssistantMCPServer | null = null;
+let server: HomeAssistantMCPSSEServer | null = null;
 
 // Graceful shutdown handling
 process.on('SIGINT', () => {
@@ -671,7 +679,7 @@ process.on('SIGTERM', () => {
 
 // Handle uncaught errors
 process.on('uncaughtException', (error) => {
-  console.error('[MCP Server] Uncaught exception:', error);
+  console.error('[MCP SSE Server] Uncaught exception:', error);
   if (server) {
     server.shutdown();
   } else {
@@ -680,7 +688,7 @@ process.on('uncaughtException', (error) => {
 });
 
 process.on('unhandledRejection', (reason) => {
-  console.error('[MCP Server] Unhandled rejection:', reason);
+  console.error('[MCP SSE Server] Unhandled rejection:', reason);
   if (server) {
     server.shutdown();
   } else {
@@ -688,9 +696,13 @@ process.on('unhandledRejection', (reason) => {
   }
 });
 
-// Start server
-server = new HomeAssistantMCPServer();
-server.run().catch((error) => {
-  console.error('[MCP Server] Fatal error:', error);
-  process.exit(1);
-});
+// Start server if run directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  server = new HomeAssistantMCPSSEServer();
+  server.run().catch((error) => {
+    console.error('[MCP SSE Server] Fatal error:', error);
+    process.exit(1);
+  });
+}
+
+export default HomeAssistantMCPSSEServer;

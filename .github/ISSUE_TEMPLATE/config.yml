@@ -1,0 +1,17 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/mtebusi/HA_MCP/wiki
+    about: Check the documentation for answers to common questions
+  - name: Community Support
+    url: https://github.com/mtebusi/HA_MCP/discussions
+    about: Ask questions and discuss with the community
+  - name: Home Assistant Community
+    url: https://community.home-assistant.io/
+    about: Get help from the Home Assistant community
+  - name: Security Policy
+    url: https://github.com/mtebusi/HA_MCP/security/policy
+    about: View our security policy for reporting critical vulnerabilities
+  - name: Contributing Guidelines
+    url: https://github.com/mtebusi/HA_MCP/blob/main/CONTRIBUTING.md
+    about: Learn how to contribute to this project

@@ -1,0 +1,59 @@
+# CODEOWNERS for MCP Home Assistant Add-on
+# This file defines who is responsible for code review in different parts of the repository
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything in the repo
+* @mtebusi
+
+# GitHub workflows and CI/CD configuration
+/.github/ @mtebusi
+/.github/workflows/ @mtebusi
+/.github/dependabot.yml @mtebusi
+
+# MCP Server core implementation
+/mcp-server/src/ @mtebusi
+/mcp-server/src/index.ts @mtebusi
+/mcp-server/src/tools.ts @mtebusi
+/mcp-server/src/websocket-client.ts @mtebusi
+
+# Tests require careful review
+/mcp-server/src/__tests__/ @mtebusi
+/mcp-server/vitest.config.ts @mtebusi
+
+# Home Assistant Add-on configuration
+/mcp-server/config.yaml @mtebusi
+/mcp-server/Dockerfile @mtebusi
+/mcp-server/build.yaml @mtebusi
+/mcp-server/run.sh @mtebusi
+/mcp-server/apparmor.txt @mtebusi
+
+# Claude extension
+/mcp-server/claude-extension/ @mtebusi
+/claude-extension/ @mtebusi
+
+# Documentation
+*.md @mtebusi
+/mcp-server/DOCS.md @mtebusi
+/mcp-server/README.md @mtebusi
+/mcp-server/CHANGELOG.md @mtebusi
+
+# Security-sensitive files
+/mcp-server/SECURITY.md @mtebusi
+*.key @mtebusi
+*.pem @mtebusi
+*.cert @mtebusi
+
+# Package configuration
+package.json @mtebusi
+package-lock.json @mtebusi
+tsconfig.json @mtebusi
+
+# Repository configuration
+/repository.yaml @mtebusi
+/mcp-server/repository.json @mtebusi
+
+# Build and deployment scripts
+/scripts/ @mtebusi
+
+# Version management
+VERSION @mtebusi

@@ -5,50 +5,139 @@ profile mcp_claude flags=(attach_disconnected,mediate_deleted) {
   #include <abstractions/bash>
   #include <abstractions/nameservice>
 
+  # Capabilities
+  capability net_bind_service,
+  capability setuid,
+  capability setgid,
+  capability dac_override,
+  
+  # Deny capabilities we don't need
+  deny capability sys_admin,
+  deny capability sys_module,
+  deny capability sys_rawio,
+  deny capability sys_ptrace,
+  
   # Allow Node.js execution
   /usr/bin/node ix,
   /usr/bin/nodejs ix,
+  /usr/bin/npm rix,
   
   # Allow access to app directory
   /app/ r,
   /app/** r,
   /app/dist/** rm,
+  /app/node_modules/ r,
+  /app/node_modules/** r,
   
   # Allow access to data directory
   /data/ r,
   /data/** rw,
+  owner /data/** rw,
   
-  # Allow access to Node modules
-  /app/node_modules/ r,
-  /app/node_modules/** r,
+  # Configuration directories
+  /config/ r,
+  /config/** r,
   
-  # Allow network access for WebSocket
+  # SSL certificates (read-only)
+  /ssl/ r,
+  /ssl/** r,
+  
+  # Shared directories (read-only)
+  /share/ r,
+  /share/** r,
+  /media/ r,
+  /media/** r,
+  /backup/ r,
+  /backup/** r,
+  /addons/ r,
+  /addons/** r,
+  
+  # Home Assistant config (read-only)
+  /homeassistant_config/ r,
+  /homeassistant_config/** r,
+  
+  # Network access for WebSocket and TCP server
   network tcp,
   network inet stream,
   network inet6 stream,
+  network unix stream,
   
-  # Allow access to system files needed by Node.js
+  # System files needed by Node.js
   /proc/sys/kernel/random/uuid r,
   /proc/*/fd/ r,
   /proc/*/stat r,
   /proc/*/status r,
-  /dev/urandom r,
-  /dev/null rw,
-  /dev/tty rw,
+  /proc/*/cmdline r,
+  /proc/meminfo r,
+  /proc/cpuinfo r,
+  /sys/devices/system/cpu/** r,
   
-  # Allow bashio for configuration
+  # Device access
+  /dev/urandom r,
+  /dev/random r,
+  /dev/null rw,
+  /dev/zero r,
+  /dev/tty rw,
+  /dev/pts/* rw,
+  /dev/shm/ r,
+  /dev/shm/** rw,
+  
+  # Bashio for configuration
   /usr/bin/bashio rix,
   /usr/lib/bashio/** r,
+  /usr/bin/jq rix,
   
-  # Allow temporary files
+  # Shell utilities
+  /bin/bash rix,
+  /bin/sh rix,
+  /usr/bin/env rix,
+  /bin/cat rix,
+  /bin/grep rix,
+  /bin/sed rix,
+  /bin/awk rix,
+  /usr/bin/pgrep rix,
+  /bin/kill rix,
+  /bin/sleep rix,
+  
+  # Temporary files
   /tmp/ r,
   /tmp/** rw,
   owner /tmp/** rw,
+  /var/tmp/ r,
+  /var/tmp/** rw,
   
-  # Allow supervisor communication
+  # Supervisor communication
   /run/s6/** rw,
+  /run/supervisor/** rw,
   
   # Standard I/O for MCP protocol
   /dev/std* rw,
-  /dev/pts/* rw,
+  
+  # Health check script
+  /health.sh rix,
+  
+  # System libraries
+  /lib/** r,
+  /usr/lib/** r,
+  /usr/local/lib/** r,
+  
+  # Locale and timezone
+  /usr/share/zoneinfo/** r,
+  /etc/localtime r,
+  /etc/locale.alias r,
+  
+  # DNS resolution
+  /etc/hosts r,
+  /etc/host.conf r,
+  /etc/resolv.conf r,
+  /etc/nsswitch.conf r,
+  /etc/services r,
+  /etc/protocols r,
+  
+  # Block access to sensitive areas
+  deny /etc/passwd* rw,
+  deny /etc/shadow* rw,
+  deny /etc/gshadow* rw,
+  deny /root/** rw,
+  deny /home/** rw,
 }

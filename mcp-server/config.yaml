@@ -1,10 +1,7 @@
 name: MCP Server for Claude
-version: 1.0.4
+version: 1.0.5
 slug: mcp_claude
-description: >-
-  Control your smart home with Claude AI. This add-on bridges Claude Desktop
-  to Home Assistant, enabling natural language automation, debugging, and control
-  of all your devices, scenes, and scripts.
+description: Control your smart home with Claude AI - bridges Claude Desktop to Home Assistant for natural language automation
 url: https://github.com/mtebusi/HA_MCP
 codenotary: matt@tebusi.com
 arch:
@@ -16,7 +13,7 @@ arch:
 init: false
 startup: services
 boot: auto
-watchdog: "http://[HOST]:[PORT:6789]/health"
+watchdog: "tcp://[HOST]:[PORT:6789]"
 realtime: false
 stdin: false
 auto_uart: false
@@ -28,9 +25,10 @@ apparmor: true
 ports:
   6789/tcp: null
 ports_description:
-  6789/tcp: MCP Server TCP endpoint (required for Claude Desktop)
+  6789/tcp: MCP Server HTTP/SSE endpoint for Claude Desktop
 options:
   port: 6789
+  connection_mode: sse
   authentication_required: true
   access_token: null
   log_level: info
@@ -41,6 +39,7 @@ options:
   blocked_entities: []
 schema:
   port: "int(1024,65535)"
+  connection_mode: list(sse|stdio)?
   authentication_required: bool
   access_token: "password?"
   log_level: list(debug|info|warning|error)

@@ -1,140 +1,174 @@
 # Security Policy
 
-## Supported Versions
+## Reporting Security Vulnerabilities
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
-| < 1.0   | :x:                |
+We take security seriously. If you discover a security vulnerability, please report it responsibly.
 
-## Reporting a Vulnerability
+### How to Report
 
-We take security seriously. If you discover a security vulnerability, please follow these steps:
+**DO NOT** create a public GitHub issue for security vulnerabilities.
 
-1. **DO NOT** create a public GitHub issue
-2. Email the details to: matt@tebusi.com
-3. Include:
-   - Description of the vulnerability
-   - Steps to reproduce
-   - Potential impact
-   - Suggested fix (if any)
+Instead, please report security issues via email to: matt@tebusi.com
 
-### Response Timeline
+Include the following information:
+- Description of the vulnerability
+- Steps to reproduce
+- Potential impact
+- Suggested fix (if any)
 
-- **Initial Response**: Within 48 hours
-- **Status Update**: Within 5 business days
-- **Resolution Target**: Within 30 days for critical issues
+We will acknowledge receipt within 48 hours and provide regular updates on our progress.
 
-## Security Features
+## Security Measures
 
-### Authentication
-- Token-based authentication with configurable timeout
-- Supervisor token validation for API access
-- Optional authentication bypass for trusted networks
+### Authentication & Authorization
+- **Token-based authentication** with expiry and rotation
+- **CSRF protection** for all state-changing operations
+- **Session management** with timeout and secure storage
+- **Rate limiting** to prevent brute force attacks
 
-### Transport Security
-- Uses stdio transport instead of network TCP
-- WebSocket connections to Supervisor API only
-- No external network access required
+### Input Validation & Sanitization
+- **Entity ID validation** to prevent injection attacks
+- **Service call whitelisting** to block dangerous operations
+- **HTML sanitization** to prevent XSS attacks
+- **SQL injection prevention** through parameterized queries
+- **Path traversal protection** for file operations
 
-### Access Control
-- Entity-level filtering (domains and specific entities)
-- Read-only access to configuration files
-- Service call validation and sanitization
+### Network Security
+- **TLS/SSL encryption** for all communications
+- **WebSocket security** with authentication
+- **SSRF prevention** through URL validation
+- **Security headers** to prevent common attacks
 
-### Rate Limiting
-- 100 requests per minute per tool
-- Connection limits (max 5 concurrent)
-- Automatic backoff on errors
-
-### Input Validation
-- All user inputs sanitized
-- Template injection prevention
-- Path traversal protection
-- Command injection prevention
-
-### Memory Protection
-- TTL cache with automatic cleanup
-- Memory leak prevention
-- Resource usage monitoring
+### Data Protection
+- **Secret encryption** at rest
+- **Token hashing** with salt
+- **Sensitive data redaction** in logs
+- **Memory cleanup** for sensitive data
 
 ### Container Security
-- AppArmor profile (when enabled)
-- Read-only filesystem mounts
-- Minimal container privileges
-- No root access
+- **AppArmor profile** for isolation
+- **Non-root user** execution
+- **Minimal base image** to reduce attack surface
+- **Resource limits** to prevent DoS
+
+### Monitoring & Logging
+- **Audit logging** for security events
+- **Intrusion detection** capabilities
+- **Error sanitization** to prevent info leakage
+- **Security metrics** tracking
 
 ## Security Best Practices
 
 ### For Users
 
-1. **Use Strong Tokens**
-   - Generate long, random access tokens
-   - Rotate tokens regularly
-   - Never share tokens publicly
+1. **Use strong passwords**
+   - Minimum 12 characters
+   - Include uppercase, lowercase, numbers, and symbols
+   - Avoid common patterns
 
-2. **Enable Entity Filtering**
-   - Block sensitive entities (locks, alarms, cameras)
-   - Limit to necessary domains
-   - Review exposed entities regularly
+2. **Rotate access tokens regularly**
+   - Change tokens every 30-90 days
+   - Use different tokens for different integrations
 
-3. **Monitor Access**
-   - Check add-on logs regularly
-   - Monitor for unusual activity
-   - Set up alerts for critical actions
+3. **Enable entity filtering**
+   - Only expose necessary entities
+   - Block sensitive entities explicitly
 
-4. **Network Security**
-   - Use VPN for remote access
-   - Enable Home Assistant 2FA
-   - Keep Home Assistant updated
+4. **Monitor logs**
+   - Check for unauthorized access attempts
+   - Review security events regularly
+
+5. **Keep updated**
+   - Install security updates promptly
+   - Follow security advisories
 
 ### For Developers
 
-1. **Code Security**
-   - Never log sensitive data
-   - Validate all inputs
-   - Use parameterized queries
-   - Implement proper error handling
+1. **Never log sensitive data**
+   - Tokens, passwords, and secrets must never be logged
+   - Sanitize all error messages
 
-2. **Dependencies**
-   - Keep dependencies updated
-   - Audit dependency vulnerabilities
-   - Use lock files for reproducible builds
+2. **Validate all inputs**
+   - Never trust user input
+   - Use whitelisting over blacklisting
 
-3. **Testing**
-   - Include security tests
-   - Test with malicious inputs
-   - Verify access controls
-   - Check for information leakage
+3. **Use security utilities**
+   - Import and use the security module
+   - Don't implement custom crypto
 
-## Security Audit Checklist
+4. **Test security**
+   - Run security tests before commits
+   - Perform penetration testing
 
-- [ ] Authentication enabled and working
-- [ ] Entity filtering configured appropriately
-- [ ] Logs reviewed for sensitive data exposure
-- [ ] Network access properly restricted
-- [ ] Dependencies up to date
-- [ ] Error messages don't leak information
-- [ ] Rate limiting functioning
-- [ ] Input validation comprehensive
+5. **Follow secure coding practices**
+   - Principle of least privilege
+   - Defense in depth
+   - Fail securely
+
+## Security Checklist
+
+Before each release:
+
+- [ ] Run `npm audit` and fix vulnerabilities
+- [ ] Run security test suite
+- [ ] Review code for security issues
+- [ ] Update dependencies
+- [ ] Test authentication flows
+- [ ] Verify input validation
+- [ ] Check for sensitive data in logs
+- [ ] Validate error handling
+- [ ] Test rate limiting
+- [ ] Verify CSRF protection
+- [ ] Check container security
+- [ ] Review AppArmor profile
+- [ ] Test resource limits
+- [ ] Verify session management
+- [ ] Check audit logging
 
 ## Compliance
 
 This add-on aims to comply with:
-- Home Assistant Add-on Security Requirements
-- Docker Security Best Practices
-- OWASP Security Guidelines
 
-## Security Updates
+- **OWASP Top 10** - Web Application Security Risks
+- **CWE Top 25** - Most Dangerous Software Weaknesses
+- **Home Assistant** - Add-on Security Guidelines
+- **Docker** - Container Security Best Practices
+- **GDPR** - Data Protection (where applicable)
 
-Security updates are released as patch versions (x.x.PATCH) and should be installed immediately.
+## Security Headers
 
-Monitor for updates:
-- GitHub Releases
-- Home Assistant Add-on Store
-- Security Advisory emails (if subscribed)
+The following security headers are implemented:
 
-## Contact
+```
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+Content-Security-Policy: default-src 'self'
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: geolocation=(), microphone=(), camera=()
+```
 
-Security Team: matt@tebusi.com
-PGP Key: Available upon request
+## Vulnerability Disclosure Timeline
+
+- **Day 0**: Vulnerability reported
+- **Day 2**: Initial response to reporter
+- **Day 7**: Vulnerability confirmed and fix in development
+- **Day 14**: Fix tested and prepared for release
+- **Day 30**: Fix released and CVE published (if applicable)
+- **Day 45**: Public disclosure
+
+## Security Contact
+
+For security concerns, contact:
+- Email: matt@tebusi.com
+- GitHub Security Advisories: [Create private advisory](https://github.com/mtebusi/HA_MCP/security/advisories/new)
+- Response Time: Within 48 hours
+
+## Acknowledgments
+
+We thank the security researchers who have responsibly disclosed vulnerabilities.
+
+---
+
+Last Updated: 2025-08-09

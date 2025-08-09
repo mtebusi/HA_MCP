@@ -29,17 +29,22 @@ vi.mock('ws', () => {
 });
 
 describe('HomeAssistantWebSocket', () => {
-  let client: HomeAssistantWebSocket;
+  let client: HomeAssistantWebSocket | null = null;
   const mockUrl = 'ws://localhost:8123/api/websocket';
   const mockToken = 'test-token-123';
 
   beforeEach(() => {
     vi.clearAllMocks();
+    client = null;
   });
 
   afterEach(() => {
     if (client) {
-      client.close();
+      try {
+        client.disconnect();
+      } catch (e) {
+        // Ignore errors during cleanup
+      }
     }
   });
 
@@ -47,26 +52,46 @@ describe('HomeAssistantWebSocket', () => {
     it('should establish connection with correct URL and token', async () => {
       client = new HomeAssistantWebSocket(mockUrl, mockToken);
       
+      // Connect should initiate the connection
+      const connectPromise = client.connect();
+      
+      // Wait a bit for the mock to emit open event
       await new Promise(resolve => setTimeout(resolve, 50));
       
+      // Simulate auth success
+      const ws = (client as any).ws;
+      if (ws) {
+        ws.emit('message', JSON.stringify({ type: 'auth_ok', version: '2025.1.0' }));
+      }
+      
+      await connectPromise;
+      
       expect(client).toBeDefined();
-      // Connection should be established
+      expect((client as any).authenticated).toBe(true);
     });
 
     it('should handle authentication flow', async () => {
       client = new HomeAssistantWebSocket(mockUrl, mockToken);
       
       const connectedPromise = new Promise(resolve => {
-        client.on('connected', resolve);
+        client!.on('connected', resolve);
       });
 
-      // Simulate auth success
-      setTimeout(() => {
-        const ws = (client as any).ws;
-        ws.emit('message', JSON.stringify({ type: 'auth_ok' }));
-      }, 20);
+      const connectPromise = client.connect();
 
-      await connectedPromise;
+      // Wait for mock to emit open event
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      // Simulate auth success
+      const ws = (client as any).ws;
+      if (ws) {
+        ws.emit('message', JSON.stringify({ type: 'auth_ok', version: '2025.1.0' }));
+      }
+
+      await Promise.race([
+        connectedPromise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 1000))
+      ]);
       
       expect((client as any).authenticated).toBe(true);
     });

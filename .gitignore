@@ -15,9 +15,16 @@ dist/
 test-*.sh
 test-*.js
 validate-*.sh
+validate-*.js
+run-*-audit.sh
 *.test.js
 *.spec.js
 create_images.py
+
+# Release packages
+releases/
+*.tar.gz
+*.zip
 
 # Context and documentation files
 *-claude-context.md

@@ -1,0 +1,244 @@
+name: 'Validate Home Assistant Add-on'
+description: 'Validate Home Assistant add-on structure and configuration'
+inputs:
+  addon-path:
+    description: 'Path to add-on directory'
+    required: false
+    default: './mcp-server'
+  ha-version:
+    description: 'Home Assistant version to validate against'
+    required: false
+    default: 'latest'
+  strict:
+    description: 'Enable strict validation'
+    required: false
+    default: 'true'
+
+outputs:
+  valid:
+    description: 'Whether the add-on is valid'
+    value: ${{ steps.validate.outputs.valid }}
+  errors:
+    description: 'Validation errors (JSON)'
+    value: ${{ steps.validate.outputs.errors }}
+  warnings:
+    description: 'Validation warnings (JSON)'
+    value: ${{ steps.validate.outputs.warnings }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install validation tools
+      shell: bash
+      run: |
+        pip install --quiet pyyaml jsonschema voluptuous
+    
+    - name: Validate config.yaml structure
+      id: validate-config
+      shell: bash
+      run: |
+        python3 << 'EOF'
+        import yaml
+        import json
+        import sys
+        import os
+        from pathlib import Path
+        
+        addon_path = "${{ inputs.addon-path }}"
+        errors = []
+        warnings = []
+        
+        # Load config
+        config_path = Path(addon_path) / "config.yaml"
+        if not config_path.exists():
+            errors.append("config.yaml not found")
+            print(f"::set-output name=valid::false")
+            print(f"::set-output name=errors::{json.dumps(errors)}")
+            sys.exit(1)
+        
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+        
+        # Required fields
+        required_fields = [
+            'name', 'version', 'slug', 'description', 'arch',
+            'startup', 'boot', 'options', 'schema'
+        ]
+        
+        for field in required_fields:
+            if field not in config:
+                errors.append(f"Missing required field: {field}")
+        
+        # Validate version format
+        import re
+        if 'version' in config:
+            if not re.match(r'^\d+\.\d+\.\d+$', config['version']):
+                errors.append(f"Invalid version format: {config['version']}")
+        
+        # Validate architectures
+        valid_archs = ['armhf', 'armv7', 'aarch64', 'amd64', 'i386']
+        if 'arch' in config:
+            for arch in config['arch']:
+                if arch not in valid_archs:
+                    errors.append(f"Invalid architecture: {arch}")
+        
+        # Validate startup
+        valid_startup = ['initialize', 'system', 'services', 'application']
+        if 'startup' in config and config['startup'] not in valid_startup:
+            errors.append(f"Invalid startup value: {config['startup']}")
+        
+        # Validate boot
+        valid_boot = ['auto', 'manual']
+        if 'boot' in config and config['boot'] not in valid_boot:
+            errors.append(f"Invalid boot value: {config['boot']}")
+        
+        # Validate ports
+        if 'ports' in config:
+            for port, details in config.get('ports', {}).items():
+                if not isinstance(details, (int, dict, type(None))):
+                    errors.append(f"Invalid port configuration for {port}")
+        
+        # Validate options against schema
+        if 'options' in config and 'schema' in config:
+            options = config['options']
+            schema = config['schema']
+            
+            for key, value in options.items():
+                if key not in schema:
+                    warnings.append(f"Option '{key}' not defined in schema")
+                else:
+                    # Type checking
+                    schema_type = schema[key]
+                    if isinstance(schema_type, str):
+                        if schema_type == 'str' and not isinstance(value, str):
+                            errors.append(f"Option '{key}' should be string")
+                        elif schema_type == 'int' and not isinstance(value, int):
+                            errors.append(f"Option '{key}' should be integer")
+                        elif schema_type == 'bool' and not isinstance(value, bool):
+                            errors.append(f"Option '{key}' should be boolean")
+        
+        # Check for recommended fields
+        recommended = ['url', 'maintainer', 'init', 'hassio_api']
+        for field in recommended:
+            if field not in config:
+                warnings.append(f"Recommended field '{field}' is missing")
+        
+        # Output results
+        valid = len(errors) == 0
+        print(f"::set-output name=valid::{str(valid).lower()}")
+        print(f"::set-output name=errors::{json.dumps(errors)}")
+        print(f"::set-output name=warnings::{json.dumps(warnings)}")
+        
+        if errors:
+            print("Validation errors:")
+            for error in errors:
+                print(f"  ❌ {error}")
+        
+        if warnings:
+            print("Validation warnings:")
+            for warning in warnings:
+                print(f"  ⚠️ {warning}")
+        
+        if not valid and "${{ inputs.strict }}" == "true":
+            sys.exit(1)
+        EOF
+    
+    - name: Check required files
+      shell: bash
+      run: |
+        ADDON_PATH="${{ inputs.addon-path }}"
+        MISSING_FILES=""
+        
+        # Required files
+        for file in "Dockerfile" "run.sh"; do
+          if [ ! -f "$ADDON_PATH/$file" ]; then
+            MISSING_FILES="$MISSING_FILES $file"
+          fi
+        done
+        
+        # Recommended files
+        for file in "icon.png" "logo.png" "README.md" "CHANGELOG.md"; do
+          if [ ! -f "$ADDON_PATH/$file" ]; then
+            echo "::warning::Recommended file missing: $file"
+          fi
+        done
+        
+        if [ -n "$MISSING_FILES" ]; then
+          echo "::error::Required files missing:$MISSING_FILES"
+          if [ "${{ inputs.strict }}" == "true" ]; then
+            exit 1
+          fi
+        fi
+    
+    - name: Validate Dockerfile
+      shell: bash
+      run: |
+        DOCKERFILE="${{ inputs.addon-path }}/Dockerfile"
+        
+        if [ -f "$DOCKERFILE" ]; then
+          # Check for required labels
+          if ! grep -q "io.hass.type" "$DOCKERFILE"; then
+            echo "::warning::Missing label: io.hass.type"
+          fi
+          
+          if ! grep -q "io.hass.arch" "$DOCKERFILE"; then
+            echo "::warning::Missing label: io.hass.arch"
+          fi
+          
+          # Check for build args
+          if ! grep -q "ARG BUILD_ARCH" "$DOCKERFILE"; then
+            echo "::warning::Missing ARG BUILD_ARCH"
+          fi
+        fi
+    
+    - name: Validate translations
+      shell: bash
+      run: |
+        TRANS_DIR="${{ inputs.addon-path }}/translations"
+        
+        if [ -d "$TRANS_DIR" ]; then
+          # Check for en.yaml
+          if [ ! -f "$TRANS_DIR/en.yaml" ]; then
+            echo "::warning::Missing default translation file: en.yaml"
+          fi
+          
+          # Validate translation files
+          for file in "$TRANS_DIR"/*.yaml; do
+            if [ -f "$file" ]; then
+              python3 -c "import yaml; yaml.safe_load(open('$file'))" || {
+                echo "::error::Invalid YAML in translation file: $(basename $file)"
+              }
+            fi
+          done
+        fi
+    
+    - name: Generate validation summary
+      id: validate
+      shell: bash
+      run: |
+        echo "## Add-on Validation Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Add-on Path**: ${{ inputs.addon-path }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **HA Version**: ${{ inputs.ha-version }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Strict Mode**: ${{ inputs.strict }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ steps.validate-config.outputs.valid }}" == "true" ]; then
+          echo "### ✅ Validation Passed" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "### ❌ Validation Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Errors:**" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.validate-config.outputs.errors }}" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ -n "${{ steps.validate-config.outputs.warnings }}" ]; then
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Warnings:**" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.validate-config.outputs.warnings }}" >> $GITHUB_STEP_SUMMARY
+        fi
