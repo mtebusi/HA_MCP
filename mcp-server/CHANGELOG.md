@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2025-08-08
+### Fixed
+- **Critical**: Completely removed AppArmor profile to resolve installation blocking error
+- Fixed Dockerfile ARG BUILD_FROM warning with proper default value
+- Updated version numbers across all configuration files
+
+### Added
+- Comprehensive trust badges in both README files:
+  - Architecture support badges for all platforms
+  - Project health indicators (activity, commits, issues)
+  - Maintenance status and community links
+  - Build and lint status badges
+
+### Removed
+- Test files from repository (test-integration.js, test-stdio.sh, validate-addon.sh)
+- AppArmor profile file completely removed
+- Development files added to .gitignore
+
+### Changed
+- Simplified installation process by removing AppArmor requirement
+- Reduced package size by removing unnecessary test files
+
 ## [1.0.2] - 2025-08-08
 ### Added
 - Automated changelog generation via GitHub Actions

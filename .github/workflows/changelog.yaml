@@ -109,4 +109,5 @@ jobs:
             
             Please review and merge to keep the changelog up to date.
           branch: changelog-${{ steps.release.outputs.version }}
+          base: main
           delete-branch: true
