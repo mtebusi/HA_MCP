@@ -135,17 +135,6 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Pre-build npm dependencies if not cached
-      - name: Pre-build npm dependencies
-        if: steps.check.outputs.build == 'true'
-        run: |
-          cd ${{ matrix.addon }}
-          if [ ! -d "node_modules" ]; then
-            echo "Cache miss - installing npm dependencies"
-            npm ci --prefer-offline --no-audit
-          else
-            echo "Using cached npm dependencies"
-          fi
 
       - name: Test build ${{ matrix.addon }} add-on
         if: steps.check.outputs.build == 'true' && steps.check.outputs.push == 'false'

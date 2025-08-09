@@ -18,17 +18,12 @@ WORKDIR /app
 # This layer will only rebuild if package.json or package-lock.json changes
 COPY package*.json ./
 
-# Install dependencies separately from build
-# This layer will be cached if dependencies don't change
-RUN npm ci --only=production && \
-    npm cache clean --force
-
 # Copy TypeScript config and source files
 COPY tsconfig.json ./
 COPY src/ ./src/
 
-# Build the TypeScript project
-# Install dev dependencies, build, then remove them
+# Install ALL dependencies, build, then remove dev dependencies
+# This ensures the build process has access to TypeScript
 RUN npm ci && \
     npm run build && \
     npm prune --production && \
