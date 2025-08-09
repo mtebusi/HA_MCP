@@ -1,6 +1,70 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="1280" height="640" xmlns="http://www.w3.org/2000/svg">
-  <rect width="1280" height="640" fill="#0984ff"/>
-  <text x="640" y="300" font-family="Arial" font-size="120" fill="white" text-anchor="middle">MCP Server</text>
-  <text x="640" y="400" font-family="Arial" font-size="60" fill="white" text-anchor="middle">Home Assistant + Claude AI</text>
+<svg width="512" height="256" viewBox="0 0 512 256" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#D4A373;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#B08968;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8B6F47;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="serverGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.95" />
+      <stop offset="100%" style="stop-color:#E8E8E8;stop-opacity:0.9" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="512" height="256" fill="url(#bgGrad)"/>
+  
+  <!-- Left side: Server icon -->
+  <g transform="translate(100, 128)">
+    <!-- Server stack -->
+    <rect x="-40" y="15" width="80" height="15" rx="3" fill="url(#serverGrad)" opacity="0.7"/>
+    <rect x="-35" y="19" width="10" height="4" rx="1" fill="#8B6F47"/>
+    <rect x="-22" y="19" width="10" height="4" rx="1" fill="#8B6F47"/>
+    <circle cx="30" cy="21" r="3" fill="#4CAF50"/>
+    
+    <rect x="-40" y="-2" width="80" height="15" rx="3" fill="url(#serverGrad)" opacity="0.85"/>
+    <rect x="-35" y="2" width="10" height="4" rx="1" fill="#8B6F47"/>
+    <rect x="-22" y="2" width="10" height="4" rx="1" fill="#8B6F47"/>
+    <circle cx="30" cy="4" r="3" fill="#4CAF50"/>
+    
+    <rect x="-40" y="-19" width="80" height="15" rx="3" fill="url(#serverGrad)"/>
+    <rect x="-35" y="-15" width="10" height="4" rx="1" fill="#8B6F47"/>
+    <rect x="-22" y="-15" width="10" height="4" rx="1" fill="#8B6F47"/>
+    <circle cx="30" cy="-13" r="3" fill="#4CAF50"/>
+    
+    <!-- Protocol dots -->
+    <circle cx="0" cy="-35" r="4" fill="#FFFFFF" opacity="0.9"/>
+    <circle cx="-15" cy="-33" r="3" fill="#FFFFFF" opacity="0.7"/>
+    <circle cx="15" cy="-33" r="3" fill="#FFFFFF" opacity="0.7"/>
+    
+    <!-- Home icon -->
+    <g transform="translate(0, 45) scale(1.2)">
+      <path d="M -15,-10 L 0,-20 L 15,-10 L 15,5 L -15,5 Z" 
+            fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linejoin="round"/>
+      <rect x="-5" y="-3" width="10" height="8" fill="#FFFFFF" opacity="0.8"/>
+    </g>
+  </g>
+  
+  <!-- Right side: Text -->
+  <g transform="translate(200, 128)">
+    <!-- MCP Server text -->
+    <text x="0" y="-15" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#FFFFFF">
+      MCP Server
+    </text>
+    
+    <!-- Subtitle -->
+    <text x="0" y="15" font-family="Arial, sans-serif" font-size="18" fill="#FFFFFF" opacity="0.9">
+      for Claude + Home Assistant
+    </text>
+    
+    <!-- Connection line -->
+    <line x1="-40" y1="35" x2="180" y2="35" stroke="#FFFFFF" stroke-width="1" opacity="0.3"/>
+    
+    <!-- Feature dots -->
+    <circle cx="0" cy="50" r="2" fill="#FFFFFF" opacity="0.7"/>
+    <circle cx="20" cy="50" r="2" fill="#FFFFFF" opacity="0.7"/>
+    <circle cx="40" cy="50" r="2" fill="#FFFFFF" opacity="0.7"/>
+  </g>
 </svg>
