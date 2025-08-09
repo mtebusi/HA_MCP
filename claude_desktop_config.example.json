@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "homeassistant": {
+      "command": "node",
+      "args": ["/Users/mattbusi/Desktop/HA_MCP/dist/index.js"],
+      "env": {
+        "HOMEASSISTANT_URL": "ws://192.168.0.242:8123/api/websocket",
+        "HOMEASSISTANT_TOKEN": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIxMTQ5ODZiMWI0MDc0YTNiODU3YjMxNTM5NmMwN2YwZiIsImlhdCI6MTc1NDY5OTI3MiwiZXhwIjoyMDcwMDU5MjcyfQ.rosUxbP7rSclSTo2ZhmjdS_Sn7ERJ7w5Zn-s4l505ns",
+        "HOMEASSISTANT_VERIFY_SSL": "true",
+        "LOG_LEVEL": "info"
+      }
+    }
+  }
+}
