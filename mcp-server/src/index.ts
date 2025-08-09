@@ -13,7 +13,7 @@ import { HomeAssistantWebSocket } from './websocket-client.js';
 import { MCP_TOOLS, TOOL_HANDLERS } from './tools.js';
 import { EntityState } from './types.js';
 import { ResourceManager, CircuitBreaker, CommandQueue } from './resource-manager.js';
-import { TokenManager, InputSanitizer, RateLimiter, SessionManager, AuditLogger } from './security.js';
+import { TokenManager, InputValidator, RateLimiter, SessionManager, AuditLogger } from './security.js';
 
 /**
  * Home Assistant MCP Server
@@ -35,7 +35,7 @@ class HomeAssistantMCPServer {
   private circuitBreaker: CircuitBreaker;
   private commandQueue: CommandQueue;
   private tokenManager: TokenManager;
-  private inputSanitizer: InputSanitizer;
+  private inputValidator: InputValidator;
   private rateLimiter: RateLimiter;
   private sessionManager: SessionManager;
   private auditLogger: AuditLogger;
@@ -51,14 +51,14 @@ class HomeAssistantMCPServer {
 
     // Initialize security components
     this.tokenManager = new TokenManager();
-    this.inputSanitizer = new InputSanitizer();
+    this.inputValidator = new InputValidator();
     this.rateLimiter = new RateLimiter();
     this.sessionManager = new SessionManager();
     this.auditLogger = new AuditLogger();
 
     // Validate and secure the token (don't log it!)
     if (!this.tokenManager.validateToken(token)) {
-      this.auditLogger.log('error', 'Invalid supervisor token format', { tokenLength: token.length });
+      this.auditLogger.log('ERROR', 'Invalid supervisor token format', { tokenLength: token.length });
       throw new Error('Invalid SUPERVISOR_TOKEN format');
     }
 
@@ -140,12 +140,7 @@ class HomeAssistantMCPServer {
     
     this.resourceManager.on('clear-rate-limiter', () => {
       // Clear old rate limiter entries
-      const now = Date.now();
-      for (const [key, limit] of this.rateLimiter.entries()) {
-        if (now > limit.resetTime) {
-          this.rateLimiter.delete(key);
-        }
-      }
+      this.rateLimiter.cleanup();
     });
     
     this.resourceManager.on('stats', (stats) => {
@@ -503,11 +498,10 @@ class HomeAssistantMCPServer {
 
   private checkRateLimit(toolName: string): void {
     // Use the security module's rate limiter
-    const sessionId = this.sessionManager.getCurrentSessionId();
-    const identifier = sessionId || toolName;
+    const identifier = toolName;
     
     if (!this.rateLimiter.checkLimit(identifier)) {
-      this.auditLogger.log('security', 'Rate limit exceeded', { tool: toolName, identifier });
+      this.auditLogger.log('WARNING', 'Rate limit exceeded', { tool: toolName, identifier });
       throw new McpError(
         ErrorCode.InvalidRequest,
         'Rate limit exceeded. Please wait before making more requests.'
@@ -524,7 +518,7 @@ class HomeAssistantMCPServer {
       const entityId = Array.isArray(args.entity_id) ? args.entity_id : [args.entity_id];
       for (const id of entityId) {
         if (typeof id === 'string' && !this.inputSanitizer.validateEntityId(id)) {
-          this.auditLogger.log('security', 'Invalid entity ID attempt', { entityId: id });
+          this.auditLogger.log('WARNING', 'Invalid entity ID attempt', { entityId: id });
           throw new McpError(ErrorCode.InvalidParams, `Invalid entity ID: ${id}`);
         }
       }
@@ -533,7 +527,7 @@ class HomeAssistantMCPServer {
     // Validate service calls
     if (args?.domain && args?.service) {
       if (!this.inputSanitizer.validateServiceCall(args.domain, args.service)) {
-        this.auditLogger.log('security', 'Blocked service call', { 
+        this.auditLogger.log('WARNING', 'Blocked service call', { 
           domain: args.domain, 
           service: args.service 
         });
@@ -631,7 +625,7 @@ class HomeAssistantMCPServer {
       this.sessionManager.cleanup();
     }
     if (this.auditLogger) {
-      this.auditLogger.log('info', 'Server shutting down');
+      this.auditLogger.log('INFO', 'Server shutting down');
     }
     
     // Disconnect WebSocket

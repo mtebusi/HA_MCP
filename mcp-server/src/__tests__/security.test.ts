@@ -11,8 +11,8 @@ import {
   SessionManager,
   AuditLogger,
   PasswordValidator
-} from '../security';
-import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
+} from '../security.js';
+import { McpError } from '@modelcontextprotocol/sdk/types.js';
 
 describe('Security Module Tests', () => {
   describe('TokenManager', () => {
@@ -350,7 +350,7 @@ describe('Security Module Tests', () => {
       tests.forEach(test => {
         const result = PasswordValidator.validate(test.password);
         expect(result.valid).toBe(false);
-        expect(result.errors.some(e => e.includes(test.error))).toBe(true);
+        expect(result.errors.some((e: any) => e.includes(test.error))).toBe(true);
       });
     });
 

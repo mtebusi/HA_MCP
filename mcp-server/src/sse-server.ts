@@ -10,7 +10,7 @@ import { HomeAssistantWebSocket } from './websocket-client.js';
 import { MCP_TOOLS, TOOL_HANDLERS } from './tools.js';
 import { EntityState } from './types.js';
 import { ResourceManager, CircuitBreaker, CommandQueue } from './resource-manager.js';
-import { TokenManager, InputSanitizer, RateLimiter, SessionManager, AuditLogger } from './security.js';
+import { TokenManager, InputValidator, RateLimiter, SessionManager, AuditLogger } from './security.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -22,7 +22,7 @@ import {
 
 export class HomeAssistantMCPSSEServer {
   private server: MCPServer;
-  private httpServer: ReturnType<typeof createServer>;
+  private httpServer!: ReturnType<typeof createServer>;
   private ws: HomeAssistantWebSocket;
   private entityCache = new Map<string, EntityState>();
   private entityFilter: { allowed: string[]; blocked: string[] };
@@ -33,7 +33,7 @@ export class HomeAssistantMCPSSEServer {
   private circuitBreaker: CircuitBreaker;
   private commandQueue: CommandQueue;
   private tokenManager: TokenManager;
-  private inputSanitizer: InputSanitizer;
+  private inputValidator: InputValidator;
   private rateLimiter: RateLimiter;
   private sessionManager: SessionManager;
   private auditLogger: AuditLogger;
@@ -55,14 +55,14 @@ export class HomeAssistantMCPSSEServer {
 
     // Initialize security components
     this.tokenManager = new TokenManager();
-    this.inputSanitizer = new InputSanitizer();
+    this.inputValidator = new InputValidator();
     this.rateLimiter = new RateLimiter();
     this.sessionManager = new SessionManager();
     this.auditLogger = new AuditLogger();
 
     // Validate supervisor token
     if (!this.tokenManager.validateToken(token)) {
-      this.auditLogger.log('error', 'Invalid supervisor token format', { tokenLength: token.length });
+      this.auditLogger.log('ERROR', 'Invalid supervisor token format', { tokenLength: token.length });
       throw new Error('Invalid SUPERVISOR_TOKEN format');
     }
 
@@ -140,7 +140,7 @@ export class HomeAssistantMCPSSEServer {
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
           res.writeHead(401, { 'Content-Type': 'text/plain' });
           res.end('Unauthorized: Missing or invalid token');
-          this.auditLogger.log('security', 'Authentication failed', { 
+          this.auditLogger.log('WARNING', 'Authentication failed', { 
             ip: req.socket.remoteAddress 
           });
           return;
@@ -150,7 +150,7 @@ export class HomeAssistantMCPSSEServer {
         if (providedToken !== this.accessToken) {
           res.writeHead(401, { 'Content-Type': 'text/plain' });
           res.end('Unauthorized: Invalid token');
-          this.auditLogger.log('security', 'Invalid token attempt', { 
+          this.auditLogger.log('WARNING', 'Invalid token attempt', { 
             ip: req.socket.remoteAddress 
           });
           return;
@@ -162,7 +162,7 @@ export class HomeAssistantMCPSSEServer {
       if (!this.rateLimiter.checkLimit(clientId)) {
         res.writeHead(429, { 'Content-Type': 'text/plain' });
         res.end('Too Many Requests');
-        this.auditLogger.log('security', 'Rate limit exceeded', { 
+        this.auditLogger.log('WARNING', 'Rate limit exceeded', { 
           ip: clientId 
         });
         return;
@@ -174,7 +174,7 @@ export class HomeAssistantMCPSSEServer {
         res.end(JSON.stringify({ 
           status: 'healthy',
           version: '1.0.5',
-          websocket: this.ws.isConnected() ? 'connected' : 'disconnected',
+          websocket: this.ws ? 'connected' : 'disconnected',
           entities: this.entityCache.size
         }));
         return;
@@ -188,13 +188,13 @@ export class HomeAssistantMCPSSEServer {
         // Connect the transport to our MCP server
         this.server.connect(transport).catch(error => {
           console.error('[MCP SSE Server] Failed to connect transport:', error);
-          this.auditLogger.log('error', 'SSE transport connection failed', { 
+          this.auditLogger.log('ERROR', 'SSE transport connection failed', { 
             error: error.message 
           });
         });
 
         // Log successful connection
-        this.auditLogger.log('info', 'SSE client connected', { 
+        this.auditLogger.log('INFO', 'SSE client connected', { 
           ip: clientId 
         });
       } else {
@@ -205,7 +205,7 @@ export class HomeAssistantMCPSSEServer {
 
     this.httpServer.on('error', (error) => {
       console.error('[MCP SSE Server] HTTP server error:', error);
-      this.auditLogger.log('error', 'HTTP server error', { error: error.message });
+      this.auditLogger.log('ERROR', 'HTTP server error', { error: error.message });
     });
   }
 
@@ -395,11 +395,10 @@ export class HomeAssistantMCPSSEServer {
         this.resourceManager.recordActivity();
         
         // Check rate limit
-        const sessionId = this.sessionManager.getCurrentSessionId();
-        const identifier = sessionId || name;
+        const identifier = name;
         
         if (!this.rateLimiter.checkLimit(identifier)) {
-          this.auditLogger.log('security', 'Rate limit exceeded', { tool: name, identifier });
+          this.auditLogger.log('WARNING', 'Rate limit exceeded', { tool: name, identifier });
           throw new McpError(
             ErrorCode.InvalidRequest,
             'Rate limit exceeded. Please wait before making more requests.'
@@ -433,7 +432,7 @@ export class HomeAssistantMCPSSEServer {
         // Execute operation
         let result;
         try {
-          result = await this.circuitBreaker.call(async () => {
+          result = await this.circuitBreaker.execute(async () => {
             if (name === 'query' && ['entities', 'state'].includes(operation as string)) {
               return await this.handleCachedQuery(operation as string, sanitized);
             } else {
@@ -639,7 +638,7 @@ export class HomeAssistantMCPSSEServer {
       this.sessionManager.cleanup();
     }
     if (this.auditLogger) {
-      this.auditLogger.log('info', 'Server shutting down');
+      this.auditLogger.log('INFO', 'Server shutting down');
     }
     
     // Disconnect WebSocket

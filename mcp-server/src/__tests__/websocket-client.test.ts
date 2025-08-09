@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import WebSocket from 'ws';
-import { HomeAssistantWebSocket } from '../websocket-client';
+import { HomeAssistantWebSocket } from '../websocket-client.js';
 
 // Mock the ws module
 vi.mock('ws', () => {
@@ -121,7 +121,7 @@ describe('HomeAssistantWebSocket', () => {
       (client as any).maxReconnectAttempts = 3;
       
       let errorEmitted = false;
-      client.on('error', (error) => {
+      client.on('error', (error: any) => {
         if (error.message.includes('Max reconnection attempts')) {
           errorEmitted = true;
         }

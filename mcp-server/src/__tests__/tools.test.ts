@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { MCP_TOOLS, TOOL_HANDLERS } from '../tools';
-import type { HomeAssistantWebSocket } from '../websocket-client';
-import type { EntityState } from '../types';
+import { MCP_TOOLS, TOOL_HANDLERS } from '../tools.js';
+import type { HomeAssistantWebSocket } from '../websocket-client.js';
+import type { EntityState } from '../types.js';
 
 // Mock the WebSocket client
 const mockWs = {
@@ -105,39 +105,39 @@ describe('MCP Tools', () => {
     });
 
     it('should have Query tool with correct structure', () => {
-      const queryTool = MCP_TOOLS.find(t => t.name === 'query');
+      const queryTool = MCP_TOOLS.find((t: any) => t.name === 'query');
       expect(queryTool).toBeDefined();
       expect(queryTool?.description).toContain('Pull data from your Home Assistant');
-      expect(queryTool?.inputSchema.properties.operation).toBeDefined();
-      expect(queryTool?.inputSchema.properties.operation.enum).toContain('entities');
-      expect(queryTool?.inputSchema.properties.operation.enum).toContain('state');
-      expect(queryTool?.inputSchema.properties.operation.enum).toContain('history');
+      expect(queryTool?.inputSchema.properties?.operation).toBeDefined();
+      expect((queryTool?.inputSchema.properties?.operation as any)?.enum).toContain('entities');
+      expect((queryTool?.inputSchema.properties?.operation as any)?.enum).toContain('state');
+      expect((queryTool?.inputSchema.properties?.operation as any)?.enum).toContain('history');
     });
 
     it('should have Control tool with correct structure', () => {
-      const controlTool = MCP_TOOLS.find(t => t.name === 'control');
+      const controlTool = MCP_TOOLS.find((t: any) => t.name === 'control');
       expect(controlTool).toBeDefined();
       expect(controlTool?.description).toContain('Make things happen');
-      expect(controlTool?.inputSchema.properties.operation.enum).toContain('call_service');
-      expect(controlTool?.inputSchema.properties.operation.enum).toContain('toggle');
-      expect(controlTool?.inputSchema.properties.operation.enum).toContain('create_automation');
+      expect((controlTool?.inputSchema.properties?.operation as any)?.enum).toContain('call_service');
+      expect((controlTool?.inputSchema.properties?.operation as any)?.enum).toContain('toggle');
+      expect((controlTool?.inputSchema.properties?.operation as any)?.enum).toContain('create_automation');
     });
 
     it('should have Monitor tool with correct structure', () => {
-      const monitorTool = MCP_TOOLS.find(t => t.name === 'monitor');
+      const monitorTool = MCP_TOOLS.find((t: any) => t.name === 'monitor');
       expect(monitorTool).toBeDefined();
       expect(monitorTool?.description).toContain('Track events');
-      expect(monitorTool?.inputSchema.properties.operation.enum).toContain('subscribe');
-      expect(monitorTool?.inputSchema.properties.operation.enum).toContain('fire_event');
+      expect((monitorTool?.inputSchema.properties?.operation as any)?.enum).toContain('subscribe');
+      expect((monitorTool?.inputSchema.properties?.operation as any)?.enum).toContain('fire_event');
     });
 
     it('should have Assist tool with correct structure', () => {
-      const assistTool = MCP_TOOLS.find(t => t.name === 'assist');
+      const assistTool = MCP_TOOLS.find((t: any) => t.name === 'assist');
       expect(assistTool).toBeDefined();
       expect(assistTool?.description).toContain('Smart helpers');
-      expect(assistTool?.inputSchema.properties.operation.enum).toContain('suggest_automation');
-      expect(assistTool?.inputSchema.properties.operation.enum).toContain('analyze_patterns');
-      expect(assistTool?.inputSchema.properties.operation.enum).toContain('security_check');
+      expect((assistTool?.inputSchema.properties?.operation as any)?.enum).toContain('suggest_automation');
+      expect((assistTool?.inputSchema.properties?.operation as any)?.enum).toContain('analyze_patterns');
+      expect((assistTool?.inputSchema.properties?.operation as any)?.enum).toContain('security_check');
     });
   });
 

@@ -448,7 +448,7 @@ export const TOOL_HANDLERS: Record<string, Record<string, Function>> = {
         // Fallback message if command not available
         return { 
           message: 'History API not available via WebSocket',
-          error: error.message,
+          error: (error as Error).message,
           fallback: 'HTTP API integration required for full history support'
         };
       }

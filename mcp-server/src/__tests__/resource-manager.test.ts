@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { ResourceManager, CircuitBreaker, CommandQueue } from '../resource-manager';
+import { ResourceManager, CircuitBreaker, CommandQueue } from '../resource-manager.js';
 
 describe('ResourceManager', () => {
   let manager: ResourceManager;
