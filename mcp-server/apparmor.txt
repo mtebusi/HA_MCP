@@ -1,0 +1,101 @@
+#include <tunables/global>
+
+profile mcp_claude flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+  #include <abstractions/bash>
+  #include <abstractions/nameservice>
+
+  # Capabilities
+  capability net_bind_service,
+  capability setgid,
+  capability setuid,
+  capability dac_override,
+
+  # Node.js
+  /usr/bin/node ix,
+  /usr/lib/node_modules/** r,
+  /usr/local/lib/node_modules/** r,
+
+  # Working directory (read-only for code, read-write for runtime)
+  /app/ r,
+  /app/** r,
+  /app/dist/** r,
+  
+  # Data directory (configuration storage)
+  /data/ r,
+  /data/** rw,
+  owner /data/** rw,
+  
+  # Configuration access
+  /data/options.json r,
+  
+  # Temporary files
+  /tmp/ r,
+  /tmp/** rw,
+  owner /tmp/** rw,
+  /var/tmp/ r,
+  /var/tmp/** rw,
+  
+  # Process information
+  /proc/sys/kernel/random/boot_id r,
+  /proc/sys/net/core/somaxconn r,
+  /proc/meminfo r,
+  /proc/cpuinfo r,
+  /proc/self/** r,
+  owner /proc/*/fd/ r,
+  
+  # System information
+  /sys/devices/system/cpu/** r,
+  /sys/fs/cgroup/** r,
+  
+  # Supervisor API access
+  /run/supervisor/** rw,
+  
+  # Network access (TCP server)
+  network tcp,
+  network tcp6,
+  network unix stream,
+  
+  # DNS resolution
+  /etc/hosts r,
+  /etc/host.conf r,
+  /etc/resolv.conf r,
+  /etc/nsswitch.conf r,
+  /etc/gai.conf r,
+  
+  # SSL certificates (read-only)
+  /etc/ssl/certs/ r,
+  /etc/ssl/certs/** r,
+  /ssl/ r,
+  /ssl/** r,
+  
+  # Bashio library
+  /usr/lib/bashio/** r,
+  /usr/bin/bashio ix,
+  /usr/bin/jq ix,
+  
+  # Shell access for startup script
+  /bin/bash rix,
+  /usr/bin/env rix,
+  
+  # Deny access to sensitive areas
+  deny /boot/** rwx,
+  deny /root/** rwx,
+  deny /home/** rwx,
+  deny /media/** rwx,
+  deny /mnt/** rwx,
+  deny /config/secrets.yaml r,
+  deny /config/.storage/** rwx,
+  
+  # Deny raw device access
+  deny /dev/** rwx,
+  deny /sys/devices/virtual/dmi/** r,
+  
+  # Allow specific required devices
+  /dev/null rw,
+  /dev/zero rw,
+  /dev/random r,
+  /dev/urandom r,
+  /dev/tty rw,
+  /dev/pts/* rw,
+}

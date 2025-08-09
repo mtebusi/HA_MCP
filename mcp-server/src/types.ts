@@ -36,6 +36,8 @@ export interface EntityState {
     parent_id?: string | null;
     user_id?: string | null;
   };
+  area_id?: string | null;
+  device_id?: string | null;
 }
 
 export interface ServiceDomain {

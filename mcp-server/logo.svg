@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1280" height="640" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="640" fill="#0984ff"/>
+  <text x="640" y="300" font-family="Arial" font-size="120" fill="white" text-anchor="middle">MCP Server</text>
+  <text x="640" y="400" font-family="Arial" font-size="60" fill="white" text-anchor="middle">Home Assistant + Claude AI</text>
+</svg>

@@ -29,6 +29,11 @@ export class HomeAssistantWebSocket extends EventEmitter {
       ? url 
       : url.replace(/^https?/, 'ws') + '/api/websocket';
     this.token = token;
+    
+    // Never log tokens
+    if (process.env.LOG_LEVEL === 'debug') {
+      console.log('WebSocket client initialized (token hidden)');
+    }
   }
 
   async connect(): Promise<void> {
@@ -79,7 +84,7 @@ export class HomeAssistantWebSocket extends EventEmitter {
         this.emit('disconnected');
         
         // Clear all pending messages
-        for (const [id, pending] of this.pendingMessages) {
+        for (const [, pending] of this.pendingMessages) {
           clearTimeout(pending.timeout);
           pending.reject(new Error('WebSocket closed'));
         }
@@ -187,7 +192,7 @@ export class HomeAssistantWebSocket extends EventEmitter {
       this.emit('reconnected');
       
       // Re-establish subscriptions
-      for (const [id, type] of this.subscriptions) {
+      for (const [, type] of this.subscriptions) {
         console.error(`Re-subscribing to ${type}`);
         if (type === 'all' || type.startsWith('state_')) {
           await this.subscribeEvents(type === 'all' ? undefined : type);
@@ -282,6 +287,14 @@ export class HomeAssistantWebSocket extends EventEmitter {
   async getDeviceRegistry(): Promise<any> {
     return this.sendCommand({ type: 'config/device_registry/list' });
   }
+  
+  async getAreas(): Promise<any> {
+    return this.getAreaRegistry();
+  }
+  
+  async getDevices(): Promise<any> {
+    return this.getDeviceRegistry();
+  }
 
   async getEntityRegistry(): Promise<any> {
     return this.sendCommand({ type: 'config/entity_registry/list' });
@@ -331,9 +344,37 @@ export class HomeAssistantWebSocket extends EventEmitter {
     await this.sendCommand({ type: 'ping' });
   }
 
+  async callSupervisorAPI(endpoint: string): Promise<any> {
+    // Call Supervisor API endpoints
+    return this.sendCommand({ 
+      type: 'supervisor/api',
+      endpoint: endpoint,
+      method: 'GET'
+    });
+  }
+
+  async sendRawCommand(command: any): Promise<any> {
+    // Send raw WebSocket command for advanced operations
+    return this.sendCommand(command);
+  }
+
+  async unsubscribeEvents(subscriptionId: number): Promise<void> {
+    return this.sendCommand({
+      type: 'unsubscribe_events',
+      subscription: subscriptionId
+    });
+  }
+
   disconnect() {
     this.shouldReconnect = false;
     this.cleanup();
+    
+    // Clear all pending messages with proper cleanup
+    for (const [, pending] of this.pendingMessages) {
+      clearTimeout(pending.timeout);
+      pending.reject(new Error('Client disconnecting'));
+    }
+    this.pendingMessages.clear();
     
     if (this.ws) {
       this.ws.close();
@@ -341,6 +382,5 @@ export class HomeAssistantWebSocket extends EventEmitter {
     }
     this.authenticated = false;
     this.subscriptions.clear();
-    this.pendingMessages.clear();
   }
 }

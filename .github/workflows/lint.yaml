@@ -1,0 +1,40 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  find:
+    name: Find add-ons
+    runs-on: ubuntu-latest
+    outputs:
+      addons: ${{ steps.addons.outputs.addons_list }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Find add-ons
+        id: addons
+        run: |
+          echo "addons_list=[\"mcp-server\"]" >> $GITHUB_OUTPUT
+
+  lint:
+    name: Lint ${{ matrix.addon }}
+    runs-on: ubuntu-latest
+    needs: find
+    strategy:
+      matrix:
+        addon: ${{ fromJson(needs.find.outputs.addons) }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Home Assistant Add-on Lint
+        uses: frenck/action-addon-linter@v2
+        with:
+          path: "./${{ matrix.addon }}"

@@ -1,8 +1,12 @@
-name: "Claude MCP Server"
-version: "1.0.0"
-slug: "claude_mcp_server"
-description: "Model Context Protocol server enabling Claude AI to control Home Assistant"
-url: "https://github.com/yourusername/homeassistant-mcp-server"
+name: MCP Server for Claude
+version: 1.0.0
+slug: mcp_claude
+description: >-
+  Control your smart home with Claude AI. This add-on bridges Claude Desktop
+  to Home Assistant, enabling natural language automation, debugging, and control
+  of all your devices, scenes, and scripts.
+url: https://github.com/mtebusi/HA_MCP
+codenotary: matt@tebusi.com
 arch:
   - armhf
   - armv7
@@ -10,25 +14,92 @@ arch:
   - amd64
   - i386
 init: false
-map:
-  - config:rw
-  - ssl:ro
-options:
-  external_access_token: ""
-  log_level: "info"
-  enable_debug: false
-schema:
-  external_access_token: "str"
-  log_level: list(debug|info|warning|error)?
-  enable_debug: bool
-ports:
-  6789/tcp: 6789
-ports_description:
-  6789/tcp: "MCP Server endpoint for Claude Desktop"
-host_network: false
+machine:
+  - qemux86
+  - qemux86-64
+  - qemuarm
+  - qemuarm-64
+homeassistant: 2024.10.0
+security_rating: 2
+hassio_api: true
 homeassistant_api: true
 auth_api: true
-ingress: false
-panel_icon: mdi:robot
-startup: application
+host_network: false
+host_pid: false
+host_ipc: false
+host_uts: false
+host_dbus: false
+device_tree: false
+kernel_modules: false
+stdin: false
+legacy: false
 boot: auto
+realtime: false
+timeout: 10
+tmpfs: false
+discovery: []
+services: []
+apparmor: true
+backup_post: []
+backup_pre: []
+backup_exclude: []
+advanced: false
+stage: stable
+startup: application
+watchdog: false
+ports:
+  6789/tcp: null
+ports_description:
+  6789/tcp: MCP Server TCP endpoint (required for Claude Desktop)
+options:
+  port: 6789
+  authentication_required: true
+  access_token: null
+  log_level: info
+  connection_timeout: 30
+  max_clients: 5
+  enable_entity_filtering: false
+  allowed_domains: []
+  blocked_entities: []
+schema:
+  port: "int(1024,65535)"
+  authentication_required: bool
+  access_token: "password?"
+  log_level: list(debug|info|warning|error)
+  connection_timeout: "int(5,300)"
+  max_clients: "int(1,10)"
+  enable_entity_filtering: bool
+  allowed_domains:
+    - "str?"
+  blocked_entities:
+    - "match(^[a-z0-9_]+\\.[a-z0-9_]+$)?"
+image: ghcr.io/mtebusi/{arch}-addon-mcp-claude
+environment: {}
+map:
+  - config:ro
+  - ssl:ro
+  - addons:ro
+  - backup:ro
+  - share:ro
+  - media:ro
+video: false
+audio: false
+gpio: false
+usb: false
+uart: false
+udev: false
+devicetree: false
+docker_api: false
+privileged: []
+full_access: false
+hassio_role: default
+auth_api_expiry: 300
+ingress: false
+ingress_port: 0
+ingress_entry: /
+ingress_stream: false
+panel_icon: mdi:robot
+panel_title: MCP Claude
+panel_admin: true
+backup: hot
+journald: false

@@ -1,0 +1,18 @@
+configuration:
+  port:
+    name: Server Port
+    description: TCP port for MCP server connections
+  authentication_required:
+    name: Authentication Required
+    description: Require access token for external connections
+  access_token:
+    name: Access Token
+    description: Authentication token for secure connections (leave empty if authentication not required)
+  log_level:
+    name: Log Level
+    description: Set logging verbosity for debugging
+  connection_timeout:
+    name: Connection Timeout
+    description: Time in seconds to wait for authentication
+network:
+  6789/tcp: MCP Server endpoint for Claude Desktop
