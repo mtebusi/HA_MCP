@@ -1,15 +1,46 @@
 # Changelog
 
-## [1.0.0] - 2024-01-09
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.0.1] - 2025-08-08
+### Fixed
+- Fixed AppArmor profile loading error that prevented installation
+- Fixed missing icon and logo images in Add-on store listing
+- Fixed incomplete documentation in Add-on store README
+- Simplified AppArmor profile to prevent syntax errors
+- Temporarily disabled AppArmor enforcement for compatibility
+- Updated add-on README with comprehensive documentation from root repository
+- Generated proper PNG images with visual content for icon and logo
+
+### Changed
+- Replaced minimal add-on README with full-featured documentation
+- Updated PNG images from placeholders to actual designed graphics
+
+## [1.0.0] - 2025-08-08
 ### Initial Release
-- MCP server implementation for Claude AI integration
+- MCP server implementation for Claude AI integration with Home Assistant
+- Stdio transport for secure communication (replaced TCP)
 - WebSocket connection to Home Assistant Supervisor API
-- TCP server for Claude Desktop connections
-- Configurable authentication and port settings
-- Support for all major Home Assistant architectures
-- Full set of Home Assistant control tools:
-  - Entity state queries
-  - Service calls
-  - Area and device management
-  - Event subscriptions
-  - Configuration management
+- Real-time entity state monitoring and caching
+- 40+ operations across 4 main tools:
+  - **Query Tool**: 11 operations for reading HA data
+  - **Control Tool**: 9 operations for device control and automation
+  - **Monitor Tool**: 7 operations for real-time monitoring
+  - **Assist Tool**: 11 operations for AI-enhanced features
+- Configurable authentication and entity filtering
+- Support for all major Home Assistant architectures (ARM, AMD64, i386)
+- Enterprise-grade security features:
+  - AppArmor security profile
+  - Rate limiting (100 requests/minute)
+  - Input sanitization and validation
+  - Memory leak prevention
+  - Graceful error handling
+- Multi-architecture Docker builds
+- GitHub Actions CI/CD pipeline
+- Comprehensive documentation and examples
+
+[1.0.1]: https://github.com/mtebusi/HA_MCP/compare/v1.0.0...v1.0.1
+[1.0.0]: https://github.com/mtebusi/HA_MCP/releases/tag/v1.0.0
