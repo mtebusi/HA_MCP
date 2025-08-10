@@ -4,7 +4,7 @@ configuration:
     description: TCP port for MCP server connections from Claude Desktop
   authentication_mode:
     name: Authentication Mode
-    description: Choose authentication method - ha_oauth2 (recommended) or none
+    description: Choose authentication method - ha_oauth2 for Claude Desktop OAuth2 integration or none for no auth
   external_url:
     name: External URL
     description: External URL of your HomeAssistant instance for OAuth2 redirects (e.g., https://your-domain.duckdns.org:8123)
