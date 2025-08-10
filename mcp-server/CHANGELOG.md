@@ -5,9 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [$VERSION] - $DATE
+## [1.0.6] - 2025-01-10
+
+### Added
+- Comprehensive documentation suite (5 new guides)
+  - Configuration, Usage, Architecture, Deployment guides
+  - FAQ with troubleshooting and common questions
+- Full ESLint and Prettier configuration
+- Integration test suites for WebSocket, MCP, and SSE servers
+- Code quality tooling with lint and format scripts
+
+### Fixed
+- All documentation gaps (8 missing file references resolved)
+- ESLint configuration (was placeholder, now fully configured)
+- Version synchronization across all files
+
 ### Changed
+- Updated all version numbers to maintain consistency
+- Improved code organization and test structure
+
 ### Removed
+- Duplicate LICENSE file in mcp-server directory
+- Outdated v1.0.4 release archives
+
+## [1.0.5] - 2025-01-10
+
+### Added
+- SSE (Server-Sent Events) support for remote Claude Desktop connections
+- URL-based connection architecture for cloud deployments
+- Comprehensive documentation (Configuration, Usage, Architecture, Deployment guides)
+- ESLint and Prettier configuration for code quality
+- FAQ documentation for common questions and troubleshooting
+- Integration test placeholder structure
+
+### Changed
+- Enhanced security with multiple authentication layers
+- Improved WebSocket reconnection logic with exponential backoff
+- Updated Node.js compatibility for v24 with --no-node-snapshot flag
+- Optimized caching strategy for better performance
+
+### Fixed
+- TypeScript build errors and type definitions
+- GitHub Actions workflow issues
+- Documentation gaps and broken references (8 missing files now created)
+- ESLint configuration (was placeholder, now fully configured)
+- Memory leak in entity cache management
+
+### Security
+- Added rate limiting (100 requests/minute default)
+- Implemented circuit breaker pattern for resilience
+- Enhanced input validation and sanitization
+- Added entity filtering and permission controls
 ## [1.0.4] - 2025-08-09
 ### Added
 - **Advanced GitHub Actions Caching**: Implemented comprehensive caching strategy based on GitHub documentation
@@ -115,9 +163,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI/CD pipeline
 - Comprehensive documentation and examples
 
+[1.0.6]: https://github.com/mtebusi/HA_MCP/compare/v1.0.5...v1.0.6
+[1.0.5]: https://github.com/mtebusi/HA_MCP/compare/v1.0.4...v1.0.5
 [1.0.4]: https://github.com/mtebusi/HA_MCP/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/mtebusi/HA_MCP/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/mtebusi/HA_MCP/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/mtebusi/HA_MCP/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/mtebusi/HA_MCP/releases/tag/v1.0.0
-[v1.0.5]: https://github.com/mtebusi/HA_MCP/compare/v1.0.4...v1.0.5

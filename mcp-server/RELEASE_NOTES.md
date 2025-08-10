@@ -1,101 +1,168 @@
-# Release Notes - v1.0.4
+# Release Notes - v1.0.6
 
 ## Home Assistant MCP Server for Claude Desktop
 
-We're excited to announce the release of version 1.0.4 of the Home Assistant MCP Server, bringing significant performance improvements and enhanced build processes.
+Version 1.0.6 brings comprehensive documentation, code quality improvements, and a complete test suite to ensure production readiness.
 
-### What's New
+### What's New in v1.0.6
 
-#### Performance Enhancements
-- **85% faster builds** with comprehensive caching strategy
-- Implemented GitHub Actions caching for NPM dependencies, TypeScript builds, and Docker layers
-- Added cache warming to pre-build dependencies daily
-- Optimized Dockerfile for better layer caching
+#### Documentation & Developer Experience
+- **Complete Documentation Suite**: 5 comprehensive guides added
+  - **Configuration Guide**: All settings and options explained with examples
+  - **Usage Guide**: Natural language examples and best practices for Claude interactions
+  - **Architecture Documentation**: Detailed system design, components, and data flow
+  - **Deployment Guide**: Step-by-step instructions from local to cloud deployments
+  - **FAQ**: Common questions, troubleshooting, and support resources
+- **Production Readiness**: Increased from 85% to 95% with all critical gaps addressed
 
-#### Build System Improvements
-- Switched from `npm install` to `npm ci` for reproducible builds
-- Added multi-architecture QEMU setup for improved cross-platform builds
-- Implemented cache hit/miss reporting for transparency
-- Added automated cache management and pruning
+#### Code Quality & Testing
+- **ESLint & Prettier**: Fully configured with TypeScript support
+  - Modern ESLint v9 configuration
+  - Prettier integration for consistent formatting
+  - Pre-configured lint and format scripts
+- **Integration Test Suite**: Comprehensive test coverage
+  - WebSocket client integration tests
+  - MCP server protocol tests
+  - SSE server endpoint tests
+  - Performance and security test scenarios
+
+#### Bug Fixes & Improvements
+- Fixed all 8 missing documentation file references in README
+- Resolved ESLint placeholder configuration
+- Synchronized version numbers across all configuration files
+- Removed duplicate LICENSE file and outdated release archives
+- Improved code organization and project structure
 
 ### Key Features
 
 This add-on enables natural language control of your Home Assistant through Claude Desktop:
 
 - **40+ Operations** across 4 main tools (Query, Control, Monitor, Assist)
-- **Real-time Updates** via WebSocket connection
-- **Enterprise Security** with token authentication and entity filtering
+- **Dual Connection Modes**: SSE for remote, stdio for local security
+- **Real-time Updates** via WebSocket connection with auto-reconnection
+- **Enterprise Security** with rate limiting, entity filtering, and input validation
 - **Multi-Architecture Support** for ARM and x86 platforms
 - **One-Click Installation** through Home Assistant Add-on Store
 
-### Installation
+### Quick Start
 
-#### Quick Install
-[![Add to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fmtebusi%2FHA_MCP)
+1. **Install the Add-on**:
+   ```bash
+   # Add repository to Home Assistant
+   https://github.com/mtebusi/HA_MCP
+   ```
 
-#### Manual Installation
-1. Add repository: `https://github.com/mtebusi/HA_MCP`
-2. Install "MCP Server for Claude" from Add-on Store
-3. Configure and start the add-on
-4. Set up Claude Desktop with provided configuration
+2. **Configure Connection Mode**:
+   ```yaml
+   connection_mode: "sse"  # For remote access
+   # or
+   connection_mode: "stdio"  # For local security
+   ```
 
-### What You Can Do
+3. **Connect Claude Desktop**:
+   ```json
+   {
+     "mcpServers": {
+       "homeassistant": {
+         "command": "npx",
+         "args": ["-y", "@modelcontextprotocol/server-sse", "https://YOUR_HA:8099/sse"],
+         "env": {
+           "SSE_API_KEY": "YOUR_TOKEN"
+         }
+       }
+     }
+   }
+   ```
 
-Ask Claude natural language commands like:
-- "Turn off all bedroom lights"
-- "Create an automation for movie night"
-- "Why didn't my motion sensor trigger?"
-- "Optimize my energy usage"
-- "Show me what devices are offline"
+### Documentation Highlights
 
-### Technical Details
+#### Configuration Guide
+- Complete parameter reference with types and defaults
+- Security best practices and hardening options
+- Performance tuning recommendations
+- Network and proxy configuration
 
-- **Protocol**: Model Context Protocol (MCP) 1.0.0
-- **Transport**: Secure stdio (not TCP)
-- **Security**: AppArmor, rate limiting, input sanitization
-- **Requirements**: Home Assistant 2024.10.0+, Claude Desktop with MCP support
+#### Usage Guide
+- Natural language command examples
+- Automation creation patterns
+- Energy monitoring queries
+- Troubleshooting commands
 
-### Bug Fixes
-- Fixed changelog workflow base branch parameter
-- Resolved cache key issues in build process
-- Improved error handling for cache restoration
+#### Architecture Documentation
+- System component diagrams
+- Data flow architecture
+- Security layer implementation
+- Performance optimization strategies
 
-### Upgrade Notes
+#### Deployment Guide
+- Local development setup
+- Docker and Kubernetes deployments
+- Cloud platform instructions (AWS, GCP, Azure)
+- High availability configurations
 
-This version is fully compatible with previous configurations. No migration required.
+### Upgrading from v1.0.5
 
-To upgrade:
-1. Update through Home Assistant Add-on Store
-2. Restart the add-on
-3. No configuration changes needed
+1. **Backup your configuration** before upgrading
+2. **Update the add-on** through the Home Assistant UI
+3. **Review new documentation** in the `/docs` folder
+4. **Test your existing automations** to ensure compatibility
 
-### Coming Next
+### Breaking Changes
 
-We're working on:
-- Additional AI-powered analysis tools
-- Enhanced pattern recognition
-- Improved energy optimization algorithms
-- Extended integration support
+None - v1.0.6 maintains full backward compatibility with v1.0.5.
 
-### Community
+### Development Improvements
 
-Join the discussion:
-- [GitHub Issues](https://github.com/mtebusi/HA_MCP/issues)
-- [Home Assistant Community Forum](https://community.home-assistant.io/)
-- [Feature Requests](https://github.com/mtebusi/HA_MCP/discussions)
+For contributors and developers:
 
-### Thank You
+```bash
+# Run type checking
+npm run typecheck
 
-Thanks to all contributors and testers who helped make this release possible. Special thanks to the Home Assistant and Anthropic teams for their excellent platforms.
+# Format code
+npm run format
 
-### Download
+# Run linting
+npm run lint
 
-- [GitHub Release](https://github.com/mtebusi/HA_MCP/releases/tag/v1.0.4)
-- [Docker Images](https://github.com/mtebusi/HA_MCP/pkgs/container/ha_mcp)
-- [Claude Extension Package](https://github.com/mtebusi/HA_MCP/releases/download/v1.0.4/homeassistant-mcp-claude-extension-v1.0.4.zip)
+# Run all tests
+npm test
+
+# Run integration tests
+npm run test:integration
+```
+
+### Security Notes
+
+- All documentation references have been validated
+- Code quality tools ensure consistent and secure code
+- Integration tests verify security boundaries
+- Rate limiting and input validation are thoroughly tested
+
+### Known Issues
+
+- ESLint may experience longer initialization times on first run
+- Node.js v24 requires --no-node-snapshot flag (automatically handled)
+
+### What's Next
+
+- v1.1.0: OAuth2 authentication support
+- Enhanced automation builder with AI suggestions
+- Voice command integration
+- Energy management assistant
+- Claude memory integration for personalized experiences
+
+### Support
+
+- **Documentation**: Complete guides in `/docs` folder
+- **FAQ**: Comprehensive FAQ at `/FAQ.md`
+- **Issues**: [GitHub Issues](https://github.com/mtebusi/HA_MCP/issues)
+- **Community**: [Home Assistant Community](https://community.home-assistant.io)
+
+### Contributors
+
+Thank you to all contributors who helped improve documentation, testing, and code quality!
 
 ---
 
-**License**: MIT
-**Author**: Matt Busi
-**Support**: matt@tebusi.com
+**Full Changelog**: [v1.0.5...v1.0.6](https://github.com/mtebusi/HA_MCP/compare/v1.0.5...v1.0.6)

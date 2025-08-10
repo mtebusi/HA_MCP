@@ -21,6 +21,11 @@ run-*-audit.sh
 *.spec.js
 create_images.py
 
+# Temporary/local scripts
+scripts/*-local.sh
+scripts/temp-*.sh
+scripts/old-*.sh
+
 # Release packages
 releases/
 *.tar.gz
@@ -28,6 +33,7 @@ releases/
 
 # Context and documentation files
 *-claude-context.md
+COMPLETE_CODE_REVIEW.md
 
 # Claude Code subagent documentation
 claude-code-subagent-docs/

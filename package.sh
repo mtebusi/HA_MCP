@@ -2,7 +2,13 @@
 
 # Package script for HomeAssistant MCP Add-on Release
 
-VERSION="1.0.5"
+# Get version from config.yaml
+VERSION=$(grep "^version:" mcp-server/config.yaml | awk '{print $2}' | tr -d '"')
+if [ -z "$VERSION" ]; then
+    echo "Error: Could not extract version from config.yaml"
+    exit 1
+fi
+
 RELEASE_DIR="releases/v${VERSION}"
 
 echo "📦 Building HomeAssistant MCP Add-on v${VERSION}"
