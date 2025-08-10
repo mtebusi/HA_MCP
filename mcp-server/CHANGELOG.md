@@ -5,22 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.7] - {{RELEASE_DATE}}
+## [1.0.7] - 2025-08-10
 
 ### Added
-- **Native OAuth2 Authentication Support**
-  - Full OAuth2 server implementation for Claude Desktop Connections
-  - OAuth2 authorization, token, introspection, and revocation endpoints
-  - Dynamic client registration support
-  - Automatic client secret generation
-  - OAuth2 discovery document at `/.well-known/oauth-authorization-server`
-- **Variable-based Date Management**
-  - Release dates now use variables for automatic updates
-  - Version management script for consistent updates across all files
+- **HomeAssistant Native OAuth2 Authentication**
+  - Integration with HomeAssistant's built-in OAuth2 provider
+  - Authentication proxy bridging Claude Desktop to HA OAuth2
+  - Discovery document endpoint for self-configuration
+  - Bearer token validation against HA auth API
+  - Simplified authentication flow - no manual token management
+- **OAuth2 Discovery Support**
+  - Self-configuration via `/.well-known/oauth-authorization-server`
+  - Automatic endpoint discovery for Claude Desktop
+  - Single URL setup for complete authentication
 
 ### Changed
-- Authentication system redesigned with three modes: `oauth2`, `token`, and `none`
-- Default authentication changed from token-based to OAuth2
+- Authentication system redesigned with three modes: `ha_oauth2`, `token`, and `none`
+- Default authentication changed from token-based to HomeAssistant OAuth2
+- Simplified user onboarding with discovery URL approach
+
+### Fixed
+- GitHub Actions builder workflow now properly pushes Docker images
+- Removed deprecated 'boot' parameter from config.yaml for lint compliance
+- Optimized CI/CD pipeline by removing redundant workflows
 - Configuration schema updated to support OAuth2 client credentials
 - OAuth2 server runs on separate port (default: 7089)
 - Improved security with standard OAuth2 flow
