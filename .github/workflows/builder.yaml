@@ -140,7 +140,6 @@ jobs:
         if: steps.check.outputs.build == 'true' && steps.check.outputs.push == 'false'
         timeout-minutes: 15
         uses: home-assistant/builder@master
-        continue-on-error: true
         env:
           DOCKER_BUILDKIT: 1
           BUILDKIT_INLINE_CACHE: 1
@@ -161,6 +160,7 @@ jobs:
           BUILDKIT_INLINE_CACHE: 1
         with:
           args: |
+            --push \
             --all \
             --target /data/${{ matrix.addon }} \
             --docker-hub "ghcr.io/${{ github.repository_owner }}" \
