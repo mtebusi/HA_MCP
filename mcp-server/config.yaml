@@ -12,6 +12,7 @@ arch:
   - i386
 init: false
 startup: services
+boot: auto
 homeassistant: 2024.10.0
 hassio_api: true
 homeassistant_api: true
