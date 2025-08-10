@@ -86,8 +86,8 @@ Click the button above to automatically add this repository to your Home Assista
 | Setting | Description | Default |
 |---------|-------------|---------|
 | `port` | TCP port for MCP server | `6789` |
-| `authentication_required` | Require token for connections | `true` |
-| `access_token` | Authentication token | _(auto-generated)_ |
+| `authentication_mode` | Authentication method (ha_oauth2 or none) | `ha_oauth2` |
+| `external_url` | Your HomeAssistant external URL for OAuth2 | _(auto-detect)_ |
 | `log_level` | Logging verbosity | `info` |
 | `max_clients` | Maximum concurrent connections | `5` |
 | `enable_entity_filtering` | Filter accessible entities | `false` |
@@ -98,11 +98,37 @@ Click the button above to automatically add this repository to your Home Assista
 
 ### Claude Desktop Setup
 
-1. **Get Your Supervisor Token**
-   
-   Navigate to your Home Assistant profile and create a long-lived access token.
+#### Simple OAuth2 Connection (No Configuration Required!)
 
-2. **Configure Claude Desktop**
+The add-on uses your HomeAssistant's built-in authentication system:
+
+1. **Start the Add-on** and check the logs for the Discovery URL
+
+2. **In Claude Desktop:**
+   - Go to **Settings** → **Connectors**
+   - Click **Add Custom Connector**
+   - Enter the Discovery URL from the add-on logs:
+     ```
+     http://<your-ha-ip>:7089/.well-known/oauth-authorization-server
+     ```
+
+3. **Authenticate:**
+   - Claude will redirect you to your HomeAssistant login page
+   - Log in with your HomeAssistant credentials
+   - Authorize Claude Desktop to access your MCP server
+   - You're connected! No tokens or secrets to manage
+
+#### Method 2: Direct Configuration (Legacy)
+
+For direct local connections or advanced setups:
+
+1. **Generate an Access Token (if using authentication):**
+   - In Home Assistant Add-on Configuration:
+     - Set `authentication_required` to `true`
+     - Either set a custom `access_token` or let the add-on generate one
+     - Copy the token from the add-on logs
+
+2. **Configure Claude Desktop:**
    
    Edit `claude_desktop_config.json`:
    - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`

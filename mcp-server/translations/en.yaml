@@ -2,12 +2,12 @@ configuration:
   port:
     name: Server Port
     description: TCP port for MCP server connections from Claude Desktop
-  authentication_required:
-    name: Authentication Required
-    description: Require access token for external connections
-  access_token:
-    name: Access Token
-    description: Authentication token for secure connections (leave empty if authentication not required)
+  authentication_mode:
+    name: Authentication Mode
+    description: Choose authentication method - ha_oauth2 (recommended) or none
+  external_url:
+    name: External URL
+    description: External URL of your HomeAssistant instance for OAuth2 redirects (e.g., https://your-domain.duckdns.org:8123)
   log_level:
     name: Log Level
     description: Set logging verbosity for debugging

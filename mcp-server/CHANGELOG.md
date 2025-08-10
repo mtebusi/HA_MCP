@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.7] - {{RELEASE_DATE}}
+
+### Added
+- **Native OAuth2 Authentication Support**
+  - Full OAuth2 server implementation for Claude Desktop Connections
+  - OAuth2 authorization, token, introspection, and revocation endpoints
+  - Dynamic client registration support
+  - Automatic client secret generation
+  - OAuth2 discovery document at `/.well-known/oauth-authorization-server`
+- **Variable-based Date Management**
+  - Release dates now use variables for automatic updates
+  - Version management script for consistent updates across all files
+
+### Changed
+- Authentication system redesigned with three modes: `oauth2`, `token`, and `none`
+- Default authentication changed from token-based to OAuth2
+- Configuration schema updated to support OAuth2 client credentials
+- OAuth2 server runs on separate port (default: 7089)
+- Improved security with standard OAuth2 flow
+
+### Fixed
+- Removed hardcoded dates from documentation
+- Updated all references to use authentication_mode instead of authentication_required
+
+### Security
+- OAuth2 provides industry-standard authentication
+- Supports token refresh and revocation
+- Client credentials validation
+- Bearer token validation for all SSE connections
+
 ## [1.0.6] - 2025-01-10
 
 ### Added

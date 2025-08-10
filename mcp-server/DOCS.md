@@ -23,9 +23,9 @@ After installing the add-on, you'll want to tweak a few settings:
 
 **Port** - Default is 6789. Change it if something else is camping there.
 
-**Authentication Required** - Keep this on unless you really trust your network. Seriously.
+**Authentication Required** - Default is now `false` for Claude Desktop Connections. Only enable this if you're using direct API access or want an extra layer of security.
 
-**Access Token** - If auth is on, set a token here. Claude Desktop will need to know it.
+**Access Token** - Optional! Leave empty when using Claude Desktop Connections (recommended). Only set this if you enabled authentication for direct API access.
 
 **Log Level** - `info` is fine for normal use. `debug` if things get weird.
 
@@ -33,9 +33,22 @@ After installing the add-on, you'll want to tweak a few settings:
 
 ### Claude Desktop Side
 
-1. Grab a long-lived access token from your HA profile
-2. Download the client script from the repo
-3. Add the config to Claude Desktop (see README for paths)
+#### Option 1: Claude Desktop Connections (Recommended - No Token Needed!)
+
+The easy way - let Claude handle the authentication:
+
+1. Make sure `authentication_required` is `false` in the add-on config
+2. In Claude Desktop, go to Settings → Connectors
+3. Add a Custom Connector with URL: `http://<your-ha-ip>:6789/sse`
+4. That's it! Claude handles the rest
+
+#### Option 2: Direct Configuration (Legacy)
+
+For advanced users or specific network setups:
+
+1. Enable authentication in the add-on and set/note your access token
+2. Grab a long-lived access token from your HA profile  
+3. Add the config to Claude Desktop config file (see README for paths)
 4. Restart Claude Desktop
 
 ## The Tools
@@ -83,7 +96,8 @@ Memory usage is minimal (~50MB), CPU usage is basically nothing unless you're ha
 ### Claude can't connect
 1. Check the add-on is actually running (green badge in UI)
 2. Verify the port isn't blocked by a firewall
-3. Make sure the access token matches exactly (no extra spaces!)
+3. If using Claude Desktop Connections, ensure `authentication_required` is `false`
+4. If using direct connection with auth, verify the access token matches exactly (no extra spaces!)
 
 ### Commands fail or timeout
 - Check the add-on logs for errors

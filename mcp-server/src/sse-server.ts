@@ -11,6 +11,7 @@ import { MCP_TOOLS, TOOL_HANDLERS } from './tools';
 import { EntityState } from './types';
 import { ResourceManager, CircuitBreaker, CommandQueue } from './resource-manager';
 import { TokenManager, InputValidator, RateLimiter, SessionManager, AuditLogger } from './security';
+import { HomeAssistantAuthProxy } from './ha-auth-proxy';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -37,13 +38,15 @@ export class HomeAssistantMCPSSEServer {
   private rateLimiter: RateLimiter;
   private sessionManager: SessionManager;
   private auditLogger: AuditLogger;
+  private authProxy: HomeAssistantAuthProxy | null = null;
   private port: number;
-  private accessToken: string | null;
+  private useHAAuth: boolean;
 
   constructor() {
     // Get configuration from environment
     this.port = parseInt(process.env.MCP_PORT || '6789', 10);
-    this.accessToken = process.env.ACCESS_TOKEN || null;
+    // Use HomeAssistant auth by default for security
+    this.useHAAuth = process.env.AUTH_MODE !== 'none';
     
     // Use supervisor proxy for internal API access
     const url = process.env.HOMEASSISTANT_URL || 'ws://supervisor/core/api/websocket';
@@ -104,6 +107,14 @@ export class HomeAssistantMCPSSEServer {
     this.circuitBreaker = new CircuitBreaker();
     this.commandQueue = new CommandQueue();
 
+    // Initialize HomeAssistant auth proxy if enabled
+    if (this.useHAAuth) {
+      console.log('[MCP SSE Server] HomeAssistant authentication enabled');
+      this.authProxy = new HomeAssistantAuthProxy();
+      process.env.AUTH_PROXY_PORT = String(this.port + 300); // Auth proxy on separate port (e.g., 7089)
+      process.env.EXTERNAL_URL = process.env.EXTERNAL_URL || `http://homeassistant.local:8123`;
+    }
+
     // Setup handlers
     this.setupHandlers();
     this.setupWebSocketHandlers();
@@ -121,7 +132,7 @@ export class HomeAssistantMCPSSEServer {
   }
 
   private setupHTTPServer() {
-    this.httpServer = createServer((req: IncomingMessage, res: ServerResponse) => {
+    this.httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
       // CORS headers for Claude Desktop
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -135,22 +146,37 @@ export class HomeAssistantMCPSSEServer {
       }
 
       // Authentication check
-      if (this.accessToken) {
+      if (this.useHAAuth && this.authProxy) {
+        // Validate HomeAssistant OAuth2 token
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
-          res.writeHead(401, { 'Content-Type': 'text/plain' });
-          res.end('Unauthorized: Missing or invalid token');
-          this.auditLogger.log('WARNING', 'Authentication failed', undefined, { 
+          res.writeHead(401, { 
+            'Content-Type': 'application/json',
+            'WWW-Authenticate': `Bearer realm="MCP Server", error="invalid_token"`
+          });
+          res.end(JSON.stringify({ 
+            error: 'unauthorized',
+            error_description: 'HomeAssistant OAuth2 Bearer token required'
+          }));
+          this.auditLogger.log('WARNING', 'HA authentication failed - missing bearer token', undefined, { 
             ip: req.socket.remoteAddress 
           });
           return;
         }
 
         const providedToken = authHeader.substring(7);
-        if (providedToken !== this.accessToken) {
-          res.writeHead(401, { 'Content-Type': 'text/plain' });
-          res.end('Unauthorized: Invalid token');
-          this.auditLogger.log('WARNING', 'Invalid token attempt', undefined, { 
+        const isValid = await this.authProxy.validateAccessToken(providedToken);
+        
+        if (!isValid) {
+          res.writeHead(401, { 
+            'Content-Type': 'application/json',
+            'WWW-Authenticate': `Bearer realm="MCP Server", error="invalid_token"`
+          });
+          res.end(JSON.stringify({ 
+            error: 'unauthorized',
+            error_description: 'Invalid or expired HomeAssistant token'
+          }));
+          this.auditLogger.log('WARNING', 'HA invalid token attempt', undefined, { 
             ip: req.socket.remoteAddress 
           });
           return;
@@ -591,14 +617,33 @@ export class HomeAssistantMCPSSEServer {
       // Connect to Home Assistant
       await this.ws.connect();
 
+      // Start HomeAssistant auth proxy if enabled
+      if (this.authProxy) {
+        await this.authProxy.start();
+        
+        console.log('\n===========================================');
+        console.log('   Claude Desktop Connection Instructions');
+        console.log('===========================================\n');
+        console.log('1. In Claude Desktop, go to Settings → Connectors');
+        console.log('2. Click "Add Custom Connector"');
+        console.log('3. Enter the Discovery URL:');
+        console.log(`   http://<your-ha-ip>:${this.port + 300}/.well-known/oauth-authorization-server`);
+        console.log('\nThe connection will use HomeAssistant OAuth2 authentication.');
+        console.log('You will be redirected to log in to your HomeAssistant instance.\n');
+        console.log('===========================================\n');
+      }
+
       // Start HTTP server
       this.httpServer.listen(this.port, '0.0.0.0', () => {
         console.log(`[MCP SSE Server] Server listening on http://0.0.0.0:${this.port}`);
-        console.log('[MCP SSE Server] Claude Desktop can connect to:');
-        console.log(`  Local: http://localhost:${this.port}/sse`);
-        console.log(`  Network: http://<your-ha-ip>:${this.port}/sse`);
-        if (this.accessToken) {
-          console.log('[MCP SSE Server] Authentication is enabled');
+        console.log(`[MCP SSE Server] SSE endpoint: http://<your-ha-ip>:${this.port}/sse`);
+        
+        if (this.useHAAuth) {
+          console.log('[MCP SSE Server] HomeAssistant OAuth2 authentication enabled');
+          console.log('[MCP SSE Server] Tokens are validated against your HA instance');
+        } else {
+          console.log('[MCP SSE Server] WARNING: Authentication disabled - server is open!');
+          console.log('[MCP SSE Server] Set AUTH_MODE to enable security');
         }
       });
     } catch (error) {
@@ -610,6 +655,11 @@ export class HomeAssistantMCPSSEServer {
 
   private cleanup() {
     this.isShuttingDown = true;
+    
+    // Stop auth proxy
+    if (this.authProxy) {
+      this.authProxy.stop();
+    }
     
     // Close HTTP server
     if (this.httpServer) {

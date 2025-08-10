@@ -6,18 +6,18 @@ CONFIG_PATH=/data/options.json
 
 # Read configuration
 PORT="$(bashio::config 'port')"
-AUTH_REQUIRED="$(bashio::config 'authentication_required')"
-ACCESS_TOKEN="$(bashio::config 'access_token')"
+AUTH_MODE="$(bashio::config 'authentication_mode')"
+EXTERNAL_URL="$(bashio::config 'external_url')"
 LOG_LEVEL="$(bashio::config 'log_level')"
 CONN_TIMEOUT="$(bashio::config 'connection_timeout')"
 MAX_CLIENTS="$(bashio::config 'max_clients')"
 ENABLE_FILTERING="$(bashio::config 'enable_entity_filtering')"
 CONNECTION_MODE="$(bashio::config 'connection_mode')"
 
-bashio::log.info "Starting MCP Server for Claude v1.0.5"
+bashio::log.info "Starting MCP Server for Claude v1.0.7"
 bashio::log.info "Connection mode: ${CONNECTION_MODE:-sse}"
 bashio::log.info "Port: ${PORT}"
-bashio::log.info "Authentication: ${AUTH_REQUIRED}"
+bashio::log.info "Authentication mode: ${AUTH_MODE:-none}"
 bashio::log.info "Log level: ${LOG_LEVEL}"
 bashio::log.info "Max clients: ${MAX_CLIENTS}"
 
@@ -36,18 +36,48 @@ export CONNECTION_TIMEOUT="${CONN_TIMEOUT}"
 export MAX_CLIENTS="${MAX_CLIENTS}"
 export CONNECTION_MODE="${CONNECTION_MODE:-sse}"
 
-# Handle authentication
-if bashio::config.true 'authentication_required'; then
-    if bashio::config.has_value 'access_token'; then
-        export ACCESS_TOKEN="${ACCESS_TOKEN}"
-        bashio::log.info "Authentication token configured"
-    else
-        bashio::log.warning "Authentication required but no token set - generating random token"
-        export ACCESS_TOKEN="$(cat /proc/sys/kernel/random/uuid)"
-        bashio::log.warning "Generated token: ${ACCESS_TOKEN}"
-        bashio::log.warning "Save this token in your add-on configuration!"
-    fi
-fi
+# Handle authentication based on mode
+case "${AUTH_MODE}" in
+    ha_oauth2)
+        bashio::log.info "HomeAssistant OAuth2 authentication enabled"
+        export AUTH_MODE="ha_oauth2"
+        export AUTH_PROXY_PORT=$((PORT + 300))
+        
+        # Get external URL for OAuth redirects
+        if bashio::config.has_value 'external_url'; then
+            export EXTERNAL_URL="${EXTERNAL_URL}"
+            bashio::log.info "External URL: ${EXTERNAL_URL}"
+        else
+            # Try to auto-detect
+            if bashio::config.has_value 'internal_url'; then
+                export EXTERNAL_URL="$(bashio::config 'internal_url')"
+            else
+                export EXTERNAL_URL="http://homeassistant.local:8123"
+            fi
+            bashio::log.info "Using default external URL: ${EXTERNAL_URL}"
+        fi
+        
+        bashio::log.info ""
+        bashio::log.info "==================================================="
+        bashio::log.info "  Claude Desktop Connection Instructions:"
+        bashio::log.info "==================================================="
+        bashio::log.info ""
+        bashio::log.info "1. Open Claude Desktop Settings → Connectors"
+        bashio::log.info "2. Click 'Add Custom Connector'"
+        bashio::log.info "3. Enter this Discovery URL:"
+        bashio::log.info "   http://<your-ha-ip>:${AUTH_PROXY_PORT}/.well-known/oauth-authorization-server"
+        bashio::log.info ""
+        bashio::log.info "You will be redirected to log in to HomeAssistant"
+        bashio::log.info "==================================================="
+        ;;
+        
+    none|*)
+        bashio::log.warning "No authentication configured - server is open!"
+        bashio::log.warning "This is NOT recommended for production use"
+        bashio::log.warning "Set authentication_mode to 'ha_oauth2' for security"
+        export AUTH_MODE="none"
+        ;;
+esac
 
 # Handle entity filtering
 if bashio::config.true 'enable_entity_filtering'; then
@@ -91,10 +121,18 @@ if [[ "${CONNECTION_MODE}" == "stdio" ]]; then
     exec node dist/index.js
 else
     bashio::log.info "Starting MCP server in SSE/HTTP mode..."
-    bashio::log.info "Claude Desktop can connect to:"
-    bashio::log.info "  http://<your-ha-ip>:${PORT}/sse"
-    if [[ -n "${ACCESS_TOKEN}" ]]; then
-        bashio::log.info "  Authorization: Bearer ${ACCESS_TOKEN}"
-    fi
+    
+    case "${AUTH_MODE}" in
+        ha_oauth2)
+            bashio::log.info "HomeAssistant OAuth2 authentication is active"
+            bashio::log.info "MCP SSE endpoint: http://<your-ha-ip>:${PORT}/sse"
+            bashio::log.info "OAuth2 discovery: http://<your-ha-ip>:${AUTH_PROXY_PORT}/.well-known/oauth-authorization-server"
+            ;;
+        none|*)
+            bashio::log.info "No authentication configured - server is OPEN"
+            bashio::log.info "MCP SSE endpoint: http://<your-ha-ip>:${PORT}/sse"
+            ;;
+    esac
+    
     exec node dist/sse-server.js
 fi
