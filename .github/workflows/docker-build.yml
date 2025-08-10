@@ -65,7 +65,7 @@ jobs:
       - name: Extract version from config.yaml
         id: version
         run: |
-          VERSION=$(grep "^version:" mcp-server/config.yaml | cut -d'"' -f2)
+          VERSION=$(grep "^version:" mcp-server/config.yaml | awk '{print $2}' | tr -d '"')
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "Version: ${VERSION}"
       
