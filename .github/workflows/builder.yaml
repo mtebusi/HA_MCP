@@ -160,7 +160,6 @@ jobs:
           BUILDKIT_INLINE_CACHE: 1
         with:
           args: |
-            --push \
             --all \
             --target /data/${{ matrix.addon }} \
             --docker-hub "ghcr.io/${{ github.repository_owner }}" \
