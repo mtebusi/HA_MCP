@@ -68,7 +68,7 @@ jobs:
       - name: Check if add-on should be built
         id: check
         run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
+          if [[ "${{ github.event_name }}" == "release" || "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "build=true" >> $GITHUB_OUTPUT
             echo "push=true" >> $GITHUB_OUTPUT
           else
@@ -150,7 +150,7 @@ jobs:
             --all \
             --target /data/${{ matrix.addon }} \
             --docker-hub "ghcr.io/${{ github.repository_owner }}" \
-            --image "${{ steps.info.outputs.image }}"
+            --image "{arch}-addon-mcp-claude"
 
       - name: Build and push ${{ matrix.addon }} add-on
         if: steps.check.outputs.build == 'true' && steps.check.outputs.push == 'true'
@@ -164,7 +164,7 @@ jobs:
             --all \
             --target /data/${{ matrix.addon }} \
             --docker-hub "ghcr.io/${{ github.repository_owner }}" \
-            --image "${{ steps.info.outputs.image }}"
+            --image "{arch}-addon-mcp-claude"
 
       # Report cache effectiveness
       - name: Cache Performance Report

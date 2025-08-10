@@ -141,8 +141,8 @@ jobs:
           platforms: ${{ matrix.platform }}
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.prepare-release.outputs.version }}-${{ matrix.arch }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-${{ matrix.arch }}
+            ${{ env.REGISTRY }}/mtebusi/${{ matrix.arch }}-addon-mcp-claude:${{ needs.prepare-release.outputs.version }}
+            ${{ env.REGISTRY }}/mtebusi/${{ matrix.arch }}-addon-mcp-claude:latest
           labels: |
             org.opencontainers.image.version=${{ needs.prepare-release.outputs.version }}
             org.opencontainers.image.created=${{ github.event.repository.updated_at }}
@@ -171,29 +171,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Create and push manifest
+      - name: Create and push manifest  
         run: |
           VERSION="${{ needs.prepare-release.outputs.version }}"
           
-          # Create versioned manifest
-          docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}-amd64 \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}-aarch64 \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}-armv7 \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}-armhf \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}-i386
+          # Note: Since we're using architecture-prefixed image names,
+          # HomeAssistant will automatically select the correct image based on the architecture
+          # No manifest creation needed - HomeAssistant handles this via the {arch} placeholder
           
-          docker manifest push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}
-          
-          # Create latest manifest
-          docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-amd64 \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-aarch64 \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-armv7 \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-armhf \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-i386
-          
-          docker manifest push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          echo "Architecture-specific images have been pushed:"
+          echo "  - ghcr.io/mtebusi/amd64-addon-mcp-claude:${VERSION}"
+          echo "  - ghcr.io/mtebusi/aarch64-addon-mcp-claude:${VERSION}"
+          echo "  - ghcr.io/mtebusi/armv7-addon-mcp-claude:${VERSION}"
+          echo "  - ghcr.io/mtebusi/armhf-addon-mcp-claude:${VERSION}"
+          echo "  - ghcr.io/mtebusi/i386-addon-mcp-claude:${VERSION}"
 
   update-addon-repository:
     name: Update Add-on Repository
