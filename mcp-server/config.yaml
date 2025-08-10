@@ -12,16 +12,13 @@ arch:
   - i386
 init: false
 startup: services
-boot: auto
 watchdog: "tcp://[HOST]:[PORT:6789]"
 realtime: false
 stdin: false
-auto_uart: false
 homeassistant: 2024.10.0
 hassio_api: true
 homeassistant_api: true
 auth_api: true
-apparmor: true
 ports:
   6789/tcp: null
 ports_description:
@@ -60,15 +57,7 @@ map:
   - media:ro
 panel_icon: mdi:robot
 panel_title: MCP Claude
-ingress: false
-ingress_port: 8099
-ingress_entry: /
-ingress_stream: false
 stage: stable
-advanced: false
-host_network: false
-host_pid: false
-host_ipc: false
 backup_exclude:
   - "*.log"
   - "*.cache"
