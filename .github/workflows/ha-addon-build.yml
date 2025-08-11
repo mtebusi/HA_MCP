@@ -1,4 +1,4 @@
-name: HomeAssistant Add-on Build
+name: Unified Build & Deploy
 
 on:
   push:
@@ -12,9 +12,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to build (e.g., 1.1.4)'
+        description: 'Version to build (e.g., 1.1.6)'
         required: false
-        default: '1.1.4'
+        default: '1.1.6'
       push_images:
         description: 'Push images to registry'
         required: false
@@ -27,7 +27,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: addon-mcp-claude
-  VERSION: ${{ github.event.inputs.version || '1.1.4' }}
+  VERSION: ${{ github.event.inputs.version || '1.1.6' }}
 
 jobs:
   build-addon:
@@ -83,6 +83,11 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            network=host
+            image=moby/buildkit:latest
+          buildkitd-flags: --debug
 
       - name: Build and push ${{ matrix.arch }}
         uses: docker/build-push-action@v5
@@ -97,8 +102,12 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}-${{ matrix.arch }}
             ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest-${{ matrix.arch }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: |
+            type=gha,scope=${{ matrix.arch }}
+            type=registry,ref=ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:buildcache-${{ matrix.arch }}
+          cache-to: |
+            type=gha,scope=${{ matrix.arch }},mode=max
+            type=registry,ref=ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:buildcache-${{ matrix.arch }},mode=max
           provenance: false
           outputs: type=image,push=true
           labels: |
@@ -126,8 +135,21 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Wait for images to propagate
+        run: |
+          echo "Waiting for all architecture images to be available..."
+          sleep 30
+          for arch in aarch64 amd64 armhf armv7 i386; do
+            echo "Checking $arch..."
+            docker pull ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}-${arch} || exit 1
+          done
+
       - name: Create and push manifest for version tag
         run: |
+          # Remove any existing manifest
+          docker manifest rm ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }} 2>/dev/null || true
+          
+          # Create fresh manifest
           docker manifest create \
             ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }} \
             --amend ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}-aarch64 \
@@ -136,10 +158,14 @@ jobs:
             --amend ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}-armv7 \
             --amend ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}-i386
           
-          docker manifest push ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          docker manifest push --purge ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
 
       - name: Create and push manifest for latest tag
         run: |
+          # Remove any existing manifest
+          docker manifest rm ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest 2>/dev/null || true
+          
+          # Create fresh manifest
           docker manifest create \
             ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest \
             --amend ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest-aarch64 \
@@ -148,7 +174,7 @@ jobs:
             --amend ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest-armv7 \
             --amend ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest-i386
           
-          docker manifest push ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
+          docker manifest push --purge ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
 
       - name: Inspect manifest
         run: |
