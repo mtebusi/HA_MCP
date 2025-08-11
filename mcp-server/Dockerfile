@@ -1,13 +1,16 @@
 ARG BUILD_FROM
-FROM $BUILD_FROM
+FROM ${BUILD_FROM}
 
 # Install Node.js and build dependencies
+# Use architecture-agnostic installation
 RUN apk add --no-cache \
     nodejs \
     npm \
     bash \
     jq \
-    ca-certificates
+    ca-certificates \
+    && node --version \
+    && npm --version
 
 # Set working directory
 WORKDIR /app
@@ -45,7 +48,7 @@ LABEL \
     io.hass.name="MCP Server for Claude" \
     io.hass.description="Model Context Protocol server for Claude AI integration" \
     io.hass.type="addon" \
-    io.hass.version="1.1.3" \
+    io.hass.version="1.1.4" \
     io.hass.arch="armhf|armv7|aarch64|amd64|i386" \
     maintainer="Matt Busi"
 

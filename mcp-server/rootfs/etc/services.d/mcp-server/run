@@ -23,11 +23,18 @@ export SUPERVISOR_TOKEN="${SUPERVISOR_TOKEN}"
 export HA_BASE_URL="http://supervisor/core"
 export PORT="${port}"
 export CONNECTION_MODE="sse"
-export AUTHENTICATION_MODE="ha_oauth2"
+export AUTHENTICATION_MODE="supervisor"
 export LOG_LEVEL="${log_level}"
 export CONNECTION_TIMEOUT="${connection_timeout}"
 export MAX_CLIENTS="${max_clients}"
 export ENABLE_ENTITY_FILTERING="${enable_entity_filtering}"
+
+# Ingress configuration
+if bashio::addon.ingress_entry; then
+    export INGRESS_INTERFACE=$(bashio::addon.ip_address)
+    export INGRESS_PORT=$(bashio::addon.ingress_port)
+    bashio::log.info "Ingress enabled on ${INGRESS_INTERFACE}:${INGRESS_PORT}"
+fi
 
 # Handle array configs
 if bashio::config.has_value 'allowed_domains'; then
@@ -40,7 +47,7 @@ if bashio::config.has_value 'blocked_entities'; then
     export BLOCKED_ENTITIES
 fi
 
-bashio::log.info "Starting MCP Server for Claude v1.1.3..."
+bashio::log.info "Starting MCP Server for Claude v1.1.4..."
 bashio::log.info "Port: ${port}"
 bashio::log.info "Connection Mode: SSE (Server-Sent Events)"
 bashio::log.info "Authentication: HomeAssistant OAuth2"
