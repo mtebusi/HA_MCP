@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.8] - 2025-01-11
+
+### Changed
+- **Repository Cleanup**: Removed development and testing files from production releases
+- Streamlined mcp-server folder to contain only production-ready files
+- Removed non-essential markdown files (KNOWN_ISSUES.md, TEST_SUMMARY.md)
+- Removed development configuration files (.dockerignore, .prettierrc.json, eslint.config.mjs)
+- Removed version-specific and fallback scripts (run-v1.1.7.sh, run-fallback.sh)
+- Removed broken/backup source files (index.ts.broken)
+
+### Improved
+- Simplified Dockerfile by using main run.sh script instead of version-specific variants
+- Updated all version references to 1.1.8 across configuration files
+- Cleaner repository structure following HomeAssistant Add-on best practices
+- Enhanced maintainability with reduced technical debt
+
+### Documentation
+- Updated DOCS.md with cleaner installation and configuration instructions
+- Maintained only essential documentation files (DOCS.md, README.md, CHANGELOG.md)
+
 ## [1.1.7] - 2025-01-11
 
 ### Fixed

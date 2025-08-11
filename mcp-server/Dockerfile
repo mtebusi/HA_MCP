@@ -31,10 +31,9 @@ RUN npm ci --no-audit --no-fund && \
     rm -rf src/ tsconfig.json ~/.npm && \
     npm cache clean --force
 
-# Copy run scripts (with fallback for non-S6 environments)
-COPY run-v1.1.7.sh /run.sh
-COPY run-fallback.sh /app/run-fallback.sh
-RUN chmod +x /run.sh /app/run-fallback.sh
+# Copy main run script
+COPY run.sh /run.sh
+RUN chmod +x /run.sh
 
 # Copy S6 services configuration if using S6 overlay
 # Create the services directory structure
@@ -64,7 +63,7 @@ LABEL \
     io.hass.name="MCP Server for Claude" \
     io.hass.description="Model Context Protocol server for Claude AI integration" \
     io.hass.type="addon" \
-    io.hass.version="1.1.7" \
+    io.hass.version="1.1.8" \
     io.hass.arch="armhf|armv7|aarch64|amd64|i386" \
     maintainer="Matt Busi"
 

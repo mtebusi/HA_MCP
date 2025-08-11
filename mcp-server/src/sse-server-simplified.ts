@@ -64,7 +64,7 @@ export class SimplifiedMCPSSEServer {
     this.server = new MCPServer(
       {
         name: 'homeassistant-mcp',
-        version: '1.1.4',
+        version: '1.1.8',
         protocolVersion: '1.0.0',
         capabilities: {
           tools: true,
@@ -128,7 +128,7 @@ export class SimplifiedMCPSSEServer {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ 
           status: 'healthy',
-          version: '1.1.4',
+          version: '1.1.8',
           websocket: this.ws ? 'connected' : 'disconnected',
           entities: this.entityCache.size,
           ingress: hasIngressAuth
