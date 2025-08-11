@@ -39,7 +39,11 @@ jobs:
       - name: Find add-on directories
         id: changed_addons
         run: |
-          if [[ "${{ steps.changed_files.outputs.mcp-server }}" == "true" ]]; then
+          # Always build on release events
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "addons=[\"mcp-server\"]" >> $GITHUB_OUTPUT
+            echo "changed=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ steps.changed_files.outputs.mcp-server }}" == "true" ]]; then
             echo "addons=[\"mcp-server\"]" >> $GITHUB_OUTPUT
             echo "changed=true" >> $GITHUB_OUTPUT
           else
