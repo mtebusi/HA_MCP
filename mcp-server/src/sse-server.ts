@@ -82,7 +82,7 @@ export class HomeAssistantMCPSSEServer {
     this.server = new MCPServer(
       {
         name: 'homeassistant-mcp',
-        version: '1.1.3',
+        version: '1.1.9',
         protocolVersion: '1.0.0',
         capabilities: {
           tools: true,
@@ -199,7 +199,7 @@ export class HomeAssistantMCPSSEServer {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ 
           status: 'healthy',
-          version: '1.1.3',
+          version: '1.1.9',
           websocket: this.ws ? 'connected' : 'disconnected',
           entities: this.entityCache.size
         }));

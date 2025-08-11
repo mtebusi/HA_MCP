@@ -64,7 +64,7 @@ Get up and running in 5 minutes:
 ## Installation
 
 ### ⚠️ Important for v1.1.3 and Earlier Users
-**You MUST uninstall the old version before installing v1.1.5:**
+**You MUST uninstall the old version before installing v1.1.9:**
 1. Go to **Settings** → **Add-ons**
 2. Click on **MCP Server for Claude**
 3. Click **Uninstall**

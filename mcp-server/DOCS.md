@@ -4,11 +4,11 @@ Finally, a proper way to let Claude control your Home Assistant setup. No more c
 
 ## ⚠️ Important Update for v1.1.3 and Earlier Users
 
-**You MUST uninstall the old version before installing v1.1.5:**
+**You MUST uninstall the old version before installing v1.1.9:**
 1. Uninstall the existing MCP Server add-on
 2. Refresh your browser (Ctrl+F5 / Cmd+Shift+R)
 3. Re-add the repository if needed
-4. Install the new v1.1.5 version
+4. Install the new v1.1.9 version
 
 This version fixes critical S6 overlay issues and adds full support for all Raspberry Pi models!
 
