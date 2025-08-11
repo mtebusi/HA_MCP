@@ -1,0 +1,102 @@
+name: HomeAssistant Builder (Fixed)
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      force_push:
+        description: 'Force push images to registry'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+env:
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  build:
+    name: Build Add-on
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Get add-on info
+        id: info
+        uses: home-assistant/actions/helpers/info@master
+        with:
+          path: "./mcp-server"
+
+      # Login to GitHub Container Registry FIRST
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Set up QEMU for multi-arch builds
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all
+
+      # Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+
+      # Build and push with fixed arguments
+      - name: Build and push add-on
+        uses: home-assistant/builder@master
+        env:
+          CAS_API_KEY: ${{ secrets.CAS_API_KEY }}
+        with:
+          args: |
+            --all \
+            --target ./mcp-server \
+            --docker-hub ghcr.io/${{ github.repository_owner }} \
+            --image addon-mcp-claude \
+            $([ "${{ github.event_name }}" == "pull_request" ] && echo "--test" || echo "")
+
+      # Verify the build
+      - name: Verify images
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "Checking if images were pushed..."
+          
+          # Wait a moment for registry to update
+          sleep 5
+          
+          # Check each architecture
+          for arch in amd64 aarch64 armv7 armhf i386; do
+            echo "Checking $arch..."
+            if docker pull ghcr.io/${{ github.repository_owner }}/addon-mcp-claude:$arch-1.1.4 2>/dev/null; then
+              echo "✅ $arch image found"
+            else
+              echo "❌ $arch image not found"
+            fi
+          done
+          
+          # Check manifest
+          echo ""
+          echo "Checking multi-arch manifest..."
+          if docker manifest inspect ghcr.io/${{ github.repository_owner }}/addon-mcp-claude:1.1.4 2>/dev/null; then
+            echo "✅ Multi-arch manifest found"
+            docker manifest inspect ghcr.io/${{ github.repository_owner }}/addon-mcp-claude:1.1.4 | jq '.manifests[].platform'
+          else
+            echo "⚠️  Multi-arch manifest not found (may take time to propagate)"
+          fi

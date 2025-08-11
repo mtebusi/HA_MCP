@@ -158,7 +158,6 @@ jobs:
         if: steps.check.outputs.build == 'true' && steps.check.outputs.push == 'false'
         timeout-minutes: 15
         uses: home-assistant/builder@master
-        continue-on-error: true
         env:
           DOCKER_BUILDKIT: 1
           BUILDKIT_INLINE_CACHE: 1
@@ -174,7 +173,6 @@ jobs:
         if: steps.check.outputs.build == 'true' && steps.check.outputs.push == 'true'
         timeout-minutes: 20
         uses: home-assistant/builder@master
-        continue-on-error: true
         env:
           DOCKER_BUILDKIT: 1
           BUILDKIT_INLINE_CACHE: 1

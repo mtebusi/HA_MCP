@@ -1,0 +1,189 @@
+name: Docker Multi-Arch Build & Push
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g., 1.1.4)'
+        required: false
+        default: '1.1.4'
+      push_images:
+        description: 'Push images to registry'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: addon-mcp-claude
+  VERSION: ${{ github.event.inputs.version || '1.1.4' }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install cosign
+        if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@v3.5.0
+        with:
+          cosign-release: 'v2.2.4'
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:master
+            network=host
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ env.VERSION }}
+
+      # Create a custom Dockerfile that handles multi-arch properly
+      - name: Create Multi-Arch Dockerfile
+        run: |
+          cat > ./mcp-server/Dockerfile.multiarch << 'EOF'
+          # syntax=docker/dockerfile:1
+          FROM --platform=$TARGETPLATFORM ghcr.io/home-assistant/base:3.21
+
+          # Install Node.js and build dependencies
+          RUN apk add --no-cache \
+              nodejs \
+              npm \
+              bash \
+              jq \
+              ca-certificates \
+              && node --version \
+              && npm --version
+
+          # Set working directory
+          WORKDIR /app
+
+          # Copy package files
+          COPY package*.json ./
+
+          # Copy TypeScript config and source files
+          COPY tsconfig.json ./
+          COPY src/ ./src/
+
+          # Install dependencies and build
+          RUN npm ci --no-audit --no-fund && \
+              npm run build && \
+              npm prune --production --no-audit --no-fund && \
+              rm -rf src/ tsconfig.json ~/.npm && \
+              npm cache clean --force
+
+          # Copy S6 services configuration
+          RUN mkdir -p /etc/services.d/mcp-server
+
+          COPY rootfs/etc/services.d/mcp-server/run /etc/services.d/mcp-server/run
+          COPY rootfs/etc/services.d/mcp-server/finish /etc/services.d/mcp-server/finish
+
+          # Ensure correct permissions for S6 services
+          RUN chmod +x /etc/services.d/mcp-server/run && \
+              chmod +x /etc/services.d/mcp-server/finish && \
+              if [ -f /init ]; then chmod +x /init; fi
+
+          # Labels for Home Assistant
+          LABEL \
+              io.hass.name="MCP Server for Claude" \
+              io.hass.description="Model Context Protocol server for Claude AI integration" \
+              io.hass.type="addon" \
+              io.hass.version="${VERSION}" \
+              io.hass.arch="armhf|armv7|aarch64|amd64|i386" \
+              maintainer="Matt Busi"
+
+          # Health check
+          HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+              CMD pgrep -f "node dist/index.js" > /dev/null 2>&1 || exit 1
+
+          # Use S6 overlay init system from base image
+          CMD ["/init"]
+          EOF
+
+      # Build and push multi-platform image
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./mcp-server
+          file: ./mcp-server/Dockerfile.multiarch
+          platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6,linux/386
+          push: ${{ github.event_name != 'pull_request' && (github.event.inputs.push_images != 'false') }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ env.VERSION }}
+
+      # Sign the resulting Docker image digest except on PRs
+      - name: Sign the published Docker image
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+
+      # Verify the multi-arch manifest
+      - name: Verify multi-arch support
+        if: github.event_name != 'pull_request' && (github.event.inputs.push_images != 'false')
+        run: |
+          echo "Verifying multi-architecture support for version ${{ env.VERSION }}:"
+          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          
+          echo ""
+          echo "Checking individual platform images:"
+          for platform in linux/amd64 linux/arm64 linux/arm/v7 linux/arm/v6 linux/386; do
+            echo "Platform: $platform"
+            docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }} | grep -A2 "$platform" || true
+          done
+
+      # Test image locally (on runner's architecture)
+      - name: Test image locally
+        if: github.event_name == 'pull_request'
+        run: |
+          docker run --rm ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }} --version || \
+          docker run --rm ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }} node --version
