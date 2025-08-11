@@ -10,6 +10,16 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: 'Force build all architectures'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
 
 env:
   BUILD_ARGS: "--test"
@@ -40,9 +50,9 @@ jobs:
       - name: Find add-on directories
         id: changed_addons
         run: |
-          # Always build on release events
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            echo "Building for release event"
+          # Always build on release events or workflow_dispatch
+          if [[ "${{ github.event_name }}" == "release" ]] || [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "Building for ${{ github.event_name }} event"
             echo "addons=[\"mcp-server\"]" >> $GITHUB_OUTPUT
             echo "changed=true" >> $GITHUB_OUTPUT
           elif [[ "${{ steps.changed_files.outputs.mcp-server }}" == "true" ]]; then
