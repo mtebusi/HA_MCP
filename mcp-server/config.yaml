@@ -13,7 +13,6 @@ homeassistant: 2024.10.0
 hassio_api: true
 homeassistant_api: true
 auth_api: true
-watchdog: http://[HOST]:[PORT:6789]/health
 ports:
   6789/tcp: null
   7089/tcp: null

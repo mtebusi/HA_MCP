@@ -10,13 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Removed `startup: application` field per HomeAssistant linting requirements (uses default value)
 - Removed `auto_update: true` field (not a standard HomeAssistant add-on field)
+- **CRITICAL**: Removed obsolete `watchdog` field - HomeAssistant now uses native Docker HEALTHCHECK
 - Verified multi-architecture build process working correctly
 - Ensured proper base image selection for each architecture
 
 ### Technical Notes
 - The MCP server runs as a daemon with HTTP/SSE endpoint for Claude Desktop connections
-- Watchdog monitors `/health` endpoint for automatic restart on failure
+- Health monitoring via Docker HEALTHCHECK directive (replaces deprecated watchdog)
 - S6 overlay init system properly configured for all architectures
+- HEALTHCHECK monitors process with: `pgrep -f "node dist/index.js"`
 
 ## [1.1.2] - 2025-08-11
 
