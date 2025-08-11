@@ -39,8 +39,10 @@ export class SimplifiedMCPSSEServer {
     // Get configuration from environment
     this.port = parseInt(process.env.PORT || '6789', 10);
     
-    // Use supervisor proxy for internal API access
-    const url = 'ws://supervisor/core/api/websocket';
+    // Use supervisor proxy for internal API access or direct URL for testing
+    const homeassistantUrl = process.env.HOMEASSISTANT_URL || 'http://supervisor/core';
+    const wsUrl = homeassistantUrl.replace(/^https?:/, 'ws:');
+    const url = wsUrl.endsWith('/api/websocket') ? wsUrl : `${wsUrl}/api/websocket`;
     const token = process.env.SUPERVISOR_TOKEN;
 
     if (!token) {
