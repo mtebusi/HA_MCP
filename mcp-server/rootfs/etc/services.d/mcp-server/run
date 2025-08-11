@@ -5,7 +5,6 @@
 
 # Get configuration from add-on options
 declare port
-declare connection_mode
 declare authentication_mode
 declare external_url
 declare log_level
@@ -16,7 +15,6 @@ declare allowed_domains
 declare blocked_entities
 
 port=$(bashio::config 'port')
-connection_mode=$(bashio::config 'connection_mode')
 authentication_mode=$(bashio::config 'authentication_mode')
 external_url=$(bashio::config 'external_url')
 log_level=$(bashio::config 'log_level')
@@ -28,7 +26,7 @@ enable_entity_filtering=$(bashio::config 'enable_entity_filtering')
 export SUPERVISOR_TOKEN="${SUPERVISOR_TOKEN}"
 export HA_BASE_URL="http://supervisor/core"
 export PORT="${port}"
-export CONNECTION_MODE="${connection_mode}"
+export CONNECTION_MODE="sse"
 export AUTHENTICATION_MODE="${authentication_mode}"
 export EXTERNAL_URL="${external_url}"
 export LOG_LEVEL="${log_level}"
@@ -49,7 +47,7 @@ fi
 
 bashio::log.info "Starting MCP Server for Claude..."
 bashio::log.info "Port: ${port}"
-bashio::log.info "Connection Mode: ${connection_mode}"
+bashio::log.info "Connection Mode: SSE (Server-Sent Events)"
 bashio::log.info "Authentication Mode: ${authentication_mode}"
 
 # Start the Node.js application
