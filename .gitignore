@@ -11,7 +11,7 @@ dist/
 *.swo
 *~
 docs/
-test/config/
+test/
 
 
 # Test and development files
@@ -22,12 +22,20 @@ validate-*.js
 run-*-audit.sh
 *.test.js
 *.spec.js
+*.test.ts
+**/src/__tests__/
+vitest.config.js
 create_images.py
 
-# Temporary/local scripts
-scripts/*-local.sh
-scripts/temp-*.sh
-scripts/old-*.sh
+# Build and development scripts (not needed for deployment)
+package.sh
+test-docker-build.sh
+mcp-server/build-local.sh
+mcp-server/validate-addon.sh
+mcp-server/scripts/build.sh
+mcp-server/scripts/test.sh
+mcp-server/Dockerfile.test
+scripts/
 
 # Release packages
 releases/
@@ -37,6 +45,8 @@ releases/
 # Context and documentation files
 *-claude-context.md
 COMPLETE_CODE_REVIEW.md
+RELEASE_*.md
+*_PLAN.md
 
 # Claude Code subagent documentation
 claude-code-subagent-docs/
