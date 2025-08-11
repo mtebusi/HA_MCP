@@ -1,16 +1,14 @@
 name: MCP Server for Claude
-version: "1.1.0"
+version: "1.1.1"
 slug: mcp_claude
 description: Control your smart home with Claude AI - bridges Claude Desktop to Home Assistant for natural language automation
 url: https://github.com/mtebusi/HA_MCP
-codenotary: Matt Busi
 arch:
   - armhf
   - armv7
   - aarch64
   - amd64
   - i386
-init: true
 homeassistant: 2024.10.0
 hassio_api: true
 homeassistant_api: true
