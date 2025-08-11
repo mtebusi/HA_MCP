@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "http",
+  "data": {
+    "cors_allowed_origins": [
+      "http://localhost:8123",
+      "http://127.0.0.1:8123"
+    ],
+    "use_x_forwarded_for": true,
+    "trusted_proxies": [
+      "127.0.0.1",
+      "::1",
+      "172.17.0.0",
+      "172.18.0.0"
+    ],
+    "use_x_frame_options": true,
+    "server_port": 8123,
+    "login_attempts_threshold": -1,
+    "ssl_profile": "modern",
+    "ip_ban_enabled": true,
+    "server_host": [
+      "0.0.0.0",
+      "::"
+    ]
+  }
+}

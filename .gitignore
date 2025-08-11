@@ -10,6 +10,9 @@ dist/
 *.swp
 *.swo
 *~
+docs/
+test/config/
+
 
 # Test and development files
 test-*.sh

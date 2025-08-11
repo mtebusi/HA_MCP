@@ -4,7 +4,7 @@
 [![GitHub Release](https://img.shields.io/github/v/release/mtebusi/HA_MCP?include_prereleases)](https://github.com/mtebusi/HA_MCP/releases)
 [![License](https://img.shields.io/github/license/mtebusi/HA_MCP)](LICENSE)
 [![Lint](https://github.com/mtebusi/HA_MCP/actions/workflows/lint.yaml/badge.svg)](https://github.com/mtebusi/HA_MCP/actions/workflows/lint.yaml)
-[![Builder](https://github.com/mtebusi/HA_MCP/actions/workflows/builder.yaml/badge.svg)](https://github.com/mtebusi/HA_MCP/actions/workflows/builder.yaml)
+[![Build](https://github.com/mtebusi/HA_MCP/actions/workflows/ha-addon-build.yml/badge.svg)](https://github.com/mtebusi/HA_MCP/actions/workflows/ha-addon-build.yml)
 
 [![Supports aarch64 Architecture](https://img.shields.io/badge/aarch64-yes-green.svg)](https://github.com/mtebusi/HA_MCP)
 [![Supports amd64 Architecture](https://img.shields.io/badge/amd64-yes-green.svg)](https://github.com/mtebusi/HA_MCP)

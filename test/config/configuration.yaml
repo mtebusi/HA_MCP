@@ -1,0 +1,159 @@
+# HomeAssistant Test Configuration
+homeassistant:
+  name: Test Home
+  latitude: 40.7128
+  longitude: -74.0060
+  elevation: 10
+  unit_system: metric
+  currency: USD
+  country: US
+  time_zone: America/New_York
+  internal_url: http://localhost:8123
+  external_url: http://localhost:8123
+  auth_providers:
+    - type: trusted_networks
+      trusted_networks:
+        - 127.0.0.1
+        - ::1
+        - 172.17.0.0/16
+        - 172.18.0.0/16
+      allow_bypass_login: true
+    - type: homeassistant
+
+# Enable default components
+default_config:
+
+# Enable additional components for testing
+api:
+websocket_api:
+http:
+  cors_allowed_origins:
+    - http://localhost:8123
+    - http://127.0.0.1:8123
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 127.0.0.1
+    - ::1
+    - 172.17.0.0/16
+    - 172.18.0.0/16
+
+# Configure logger
+logger:
+  default: info
+  logs:
+    homeassistant.components.websocket_api: debug
+    homeassistant.components.http: debug
+
+# Enable frontend
+frontend:
+  themes: !include_dir_merge_named themes
+
+# Enable config editor
+config:
+
+# Enable mobile app support  
+mobile_app:
+
+# Enable system health
+system_health:
+
+# Enable recorder with SQLite
+recorder:
+  db_url: sqlite:////config/home-assistant_v2.db
+  purge_keep_days: 7
+
+# Enable history
+history:
+
+# Enable logbook
+logbook:
+
+# Enable person tracking
+person:
+
+# Enable sun tracking
+sun:
+
+# Enable system monitor
+sensor:
+  - platform: time_date
+    display_options:
+      - 'time'
+      - 'date'
+  - platform: systemmonitor
+    resources:
+      - type: disk_use_percent
+        arg: /
+      - type: memory_use_percent
+      - type: processor_use
+      - type: processor_temperature
+      - type: last_boot
+
+# Test entities for MCP
+input_boolean:
+  test_switch:
+    name: Test Switch
+    initial: off
+    icon: mdi:toggle-switch
+
+input_number:
+  test_slider:
+    name: Test Slider
+    initial: 50
+    min: 0
+    max: 100
+    step: 5
+    unit_of_measurement: "%"
+
+input_text:
+  test_text:
+    name: Test Text
+    initial: "Hello MCP"
+    max: 255
+
+input_select:
+  test_select:
+    name: Test Select
+    options:
+      - Option 1
+      - Option 2  
+      - Option 3
+    initial: Option 1
+
+# Test automation
+automation:
+  - alias: Test Automation
+    trigger:
+      - platform: state
+        entity_id: input_boolean.test_switch
+        to: 'on'
+    action:
+      - service: system_log.write
+        data:
+          message: "Test switch turned on"
+          level: info
+
+# Test script
+script:
+  test_script:
+    alias: Test Script
+    sequence:
+      - service: system_log.write
+        data:
+          message: "Test script executed"
+          level: info
+
+# Enable discovery
+discovery:
+  ignore:
+    - apple_tv
+    - plex_mediaserver
+
+# Enable SSDP
+ssdp:
+
+# Enable zeroconf/mDNS
+zeroconf:
+
+# Enable UPnP
+upnp:
