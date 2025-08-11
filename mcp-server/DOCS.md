@@ -1,6 +1,16 @@
-# Claude MCP Server v1.1.3
+# Claude MCP Server v1.1.5
 
 Finally, a proper way to let Claude control your Home Assistant setup. No more copy-pasting YAML, no more explaining your entity names - just natural conversation with an AI that actually understands your smart home.
+
+## ⚠️ Important Update for v1.1.3 and Earlier Users
+
+**You MUST uninstall the old version before installing v1.1.5:**
+1. Uninstall the existing MCP Server add-on
+2. Refresh your browser (Ctrl+F5 / Cmd+Shift+R)
+3. Re-add the repository if needed
+4. Install the new v1.1.5 version
+
+This version fixes critical S6 overlay issues and adds full support for all Raspberry Pi models!
 
 ## What This Does
 
@@ -33,19 +43,35 @@ After installing the add-on, you'll want to tweak a few settings:
 
 ### Claude Desktop Side
 
-#### Secure OAuth2 Authentication
+#### Simple Configuration
 
-The add-on uses HomeAssistant's OAuth2 authentication for maximum security:
+The add-on uses supervisor tokens for automatic authentication:
 
 1. Start the add-on in Home Assistant
-2. In Claude Desktop, go to Settings → Connectors
-3. Add a Custom Connector with URL:
-   - **Local**: `http://<your-ha-ip>:6789/sse`
-   - **Nabu Casa**: Automatically configured - use your Nabu Casa URL
-4. Claude will handle OAuth2 authentication automatically
-5. That's it! No manual tokens needed
+2. Configure Claude Desktop with one of these URLs:
+   - **Local Network**: `http://homeassistant.local:6789`
+   - **IP Address**: `http://<your-ha-ip>:6789`
+   - **Nabu Casa**: `https://<your-id>.ui.nabu.casa:6789`
 
-> **Note**: External URLs are automatically detected when using Nabu Casa or other remote access solutions. You don't need to configure this manually.
+3. Edit your Claude Desktop config file:
+   ```json
+   {
+     "mcpServers": {
+       "homeassistant": {
+         "command": "npx",
+         "args": [
+           "-y",
+           "@modelcontextprotocol/server-sse-client",
+           "http://homeassistant.local:6789/sse"
+         ]
+       }
+     }
+   }
+   ```
+
+4. Restart Claude Desktop - no manual tokens needed!
+
+> **Note**: The add-on handles all authentication automatically using supervisor tokens. Ingress support means it works with Nabu Casa and other remote access solutions.
 
 ## The Tools
 
@@ -92,9 +118,9 @@ Memory usage is minimal (~50MB), CPU usage is basically nothing unless you're ha
 ### Claude can't connect
 1. Check the add-on is actually running (green badge in UI)
 2. Verify the port isn't blocked by a firewall
-3. Check the add-on logs for OAuth2 authentication errors
+3. Try using the IP address instead of homeassistant.local
 4. Ensure your Home Assistant instance is accessible from Claude Desktop
-5. For Nabu Casa users, the connection URL is automatically configured
+5. For Nabu Casa users, use the https URL with your Nabu Casa ID
 
 ### Commands fail or timeout
 - Check the add-on logs for errors

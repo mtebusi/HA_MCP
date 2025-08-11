@@ -10,11 +10,11 @@
 
 ### 🏗️ Supported Architectures
 
-[![aarch64](https://img.shields.io/badge/aarch64-yes-green.svg)](https://github.com/mtebusi/HA_MCP)
-[![amd64](https://img.shields.io/badge/amd64-yes-green.svg)](https://github.com/mtebusi/HA_MCP)
-[![armhf](https://img.shields.io/badge/armhf-yes-green.svg)](https://github.com/mtebusi/HA_MCP)
-[![armv7](https://img.shields.io/badge/armv7-yes-green.svg)](https://github.com/mtebusi/HA_MCP)
-[![i386](https://img.shields.io/badge/i386-yes-green.svg)](https://github.com/mtebusi/HA_MCP)
+[![armhf](https://img.shields.io/badge/armhf-yes-green.svg)](https://github.com/mtebusi/HA_MCP) Raspberry Pi Zero/1
+[![armv7](https://img.shields.io/badge/armv7-yes-green.svg)](https://github.com/mtebusi/HA_MCP) Raspberry Pi 3/4 (32-bit)
+[![aarch64](https://img.shields.io/badge/aarch64-yes-green.svg)](https://github.com/mtebusi/HA_MCP) Raspberry Pi 4/5 (64-bit)
+[![amd64](https://img.shields.io/badge/amd64-yes-green.svg)](https://github.com/mtebusi/HA_MCP) Intel/AMD
+[![i386](https://img.shields.io/badge/i386-yes-green.svg)](https://github.com/mtebusi/HA_MCP) Legacy x86
 
 ### 📊 Project Health
 
@@ -30,12 +30,19 @@
 
 - **🗣️ Natural Language Control** - Talk to Claude like a human to control devices
 - **🔧 40+ Operations** - Query states, call services, create automations, analyze patterns
-- **🔒 Enterprise Security** - AppArmor, rate limiting, input sanitization, entity filtering
+- **🔒 Simplified Security** - Automatic supervisor token authentication
 - **⚡ Real-time Updates** - WebSocket connection for instant state changes
-- **🏗️ Multi-Architecture** - Supports ARM, AMD64, and i386 platforms
+- **🏗️ Universal Compatibility** - All Raspberry Pi models, Intel/AMD, and legacy systems
 - **🚀 Easy Installation** - One-click add to Home Assistant
+- **🌐 Ingress Support** - Works with Nabu Casa and remote access
 
 ## Installation
+
+### ⚠️ Important for v1.1.3 and Earlier Users
+**You MUST uninstall the old version first:**
+1. Uninstall the existing MCP Server add-on
+2. Refresh your browser
+3. Follow the installation steps below
 
 ### Quick Install
 
@@ -49,6 +56,8 @@ Click the button above to automatically add this repository to your Home Assista
 2. Click **⋮** → **Repositories**
 3. Add: `https://github.com/mtebusi/HA_MCP`
 4. Click **Add**
+5. Refresh the Add-on Store
+6. Install **MCP Server for Claude v1.1.5**
 
 ## Configuration
 
@@ -61,9 +70,8 @@ Click the button above to automatically add this repository to your Home Assista
 | Setting | Description | Default |
 |---------|-------------|---------|
 | `port` | TCP port for MCP server | `6789` |
-| `authentication_required` | Require token for connections | `true` |
-| `access_token` | Authentication token | _(auto-generated)_ |
 | `log_level` | Logging verbosity | `info` |
+| `connection_timeout` | WebSocket connection timeout | `30` |
 | `max_clients` | Maximum concurrent connections | `5` |
 | `enable_entity_filtering` | Filter accessible entities | `false` |
 | `allowed_domains` | Entity domains to expose | _(all)_ |
@@ -72,6 +80,11 @@ Click the button above to automatically add this repository to your Home Assista
 4. Start the add-on and enable **Start on boot**
 
 ### Claude Desktop Configuration
+
+Use one of these URLs based on your setup:
+- **Local Network**: `http://homeassistant.local:6789`
+- **IP Address**: `http://<your-ha-ip>:6789`
+- **Nabu Casa**: `https://<your-id>.ui.nabu.casa:6789`
 
 1. **Configure Claude Desktop**
    
@@ -84,24 +97,18 @@ Click the button above to automatically add this repository to your Home Assista
    {
      "mcpServers": {
        "homeassistant": {
-         "command": "docker",
+         "command": "npx",
          "args": [
-           "exec",
-           "-i",
-           "addon_local_mcp_claude",
-           "node",
-           "/app/dist/index.js"
-         ],
-         "env": {
-           "SUPERVISOR_TOKEN": "YOUR_SUPERVISOR_TOKEN",
-           "HOMEASSISTANT_URL": "ws://supervisor/core/api/websocket"
-         }
+           "-y",
+           "@modelcontextprotocol/server-sse-client",
+           "http://homeassistant.local:6789/sse"
+         ]
        }
      }
    }
    ```
 
-2. **Restart Claude Desktop**
+2. **Restart Claude Desktop** - Authentication is handled automatically!
 
 ## Available Tools
 
@@ -186,12 +193,12 @@ Ask Claude natural language questions and commands like:
 
 ## Security
 
-- **Rating**: 6/6 (Highest security rating)
-- **AppArmor**: Enabled with strict profile
-- **Network**: Isolated container environment
-- **Access**: Only required Home Assistant APIs
-- **Authentication**: Token-based with timeout
+- **Authentication**: Automatic supervisor token authentication
+- **Network**: Isolated container with ingress support
+- **Access**: Only required Home Assistant APIs via Supervisor
+- **Rate Limiting**: 100 requests per minute per tool
 - **Filtering**: Entity-level access control
+- **Input Validation**: All inputs sanitized and validated
 
 ## Troubleshooting
 
@@ -241,7 +248,12 @@ npm run build
 
 - **Home Assistant**: 2024.10.0 or newer
 - **Claude Desktop**: Latest version with MCP support
-- **Platforms**: ARM (Raspberry Pi), AMD64 (x86_64), i386
+- **Supported Devices**:
+  - Raspberry Pi Zero/1 (armv6/armhf)
+  - Raspberry Pi 3/4 32-bit (armv7)
+  - Raspberry Pi 4/5 64-bit (aarch64/arm64)
+  - Intel/AMD systems (amd64/x86_64)
+  - Legacy 32-bit x86 (i386)
 - **Operating Systems**: HassOS, Debian, Ubuntu, Alpine Linux
 - **Integrations**: Works with all Home Assistant integrations
 

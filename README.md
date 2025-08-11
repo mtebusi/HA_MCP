@@ -45,10 +45,11 @@
 
 - **Natural Language Control** - Talk to Claude like a human to control devices
 - **40+ Operations** - Query states, call services, create automations, analyze patterns
-- **Enterprise Security** - AppArmor, rate limiting, input sanitization, entity filtering
+- **Enterprise Security** - Supervisor tokens, rate limiting, input sanitization, entity filtering
 - **Real-time Updates** - WebSocket connection for instant state changes
-- **Multi-Architecture** - Supports ARM, AMD64, and i386 platforms
+- **Multi-Architecture** - Full support for all Raspberry Pi models (Zero/1/3/4/5), Intel/AMD, and legacy x86
 - **Easy Installation** - One-click add to Home Assistant
+- **Ingress Support** - Works with Nabu Casa and remote access
 
 ## Quick Start
 
@@ -62,6 +63,14 @@ Get up and running in 5 minutes:
 
 ## Installation
 
+### ⚠️ Important for v1.1.3 and Earlier Users
+**You MUST uninstall the old version before installing v1.1.5:**
+1. Go to **Settings** → **Add-ons**
+2. Click on **MCP Server for Claude**
+3. Click **Uninstall**
+4. Refresh your browser (Ctrl+F5 / Cmd+Shift+R)
+5. Follow the installation steps below
+
 ### One-Click Install
 
 [![Add to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fmtebusi%2FHA_MCP)
@@ -74,6 +83,8 @@ Click the button above to automatically add this repository to your Home Assista
 2. Click **⋮** → **Repositories**
 3. Add: `https://github.com/mtebusi/HA_MCP`
 4. Click **Add**
+5. **Refresh the Add-on Store** (pull down to refresh on mobile, F5 on desktop)
+6. Find and install **MCP Server for Claude v1.1.5**
 
 ## Configuration
 
@@ -86,9 +97,8 @@ Click the button above to automatically add this repository to your Home Assista
 | Setting | Description | Default |
 |---------|-------------|---------|
 | `port` | TCP port for MCP server | `6789` |
-| `authentication_mode` | Authentication method (ha_oauth2 or none) | `ha_oauth2` |
-| `external_url` | Your HomeAssistant external URL for OAuth2 | _(auto-detect)_ |
 | `log_level` | Logging verbosity | `info` |
+| `connection_timeout` | WebSocket connection timeout (seconds) | `30` |
 | `max_clients` | Maximum concurrent connections | `5` |
 | `enable_entity_filtering` | Filter accessible entities | `false` |
 | `allowed_domains` | Entity domains to expose | _(all)_ |
@@ -98,37 +108,15 @@ Click the button above to automatically add this repository to your Home Assista
 
 ### Claude Desktop Setup
 
-#### Simple OAuth2 Connection (No Configuration Required!)
+#### Connection URLs
 
-The add-on uses your HomeAssistant's built-in authentication system:
+Use one of these URLs in Claude Desktop based on your setup:
 
-1. **Start the Add-on** and check the logs for the Discovery URL
+- **Local Network**: `http://homeassistant.local:6789`
+- **IP Address**: `http://<your-ha-ip>:6789`
+- **Nabu Casa (Remote)**: `https://<your-id>.ui.nabu.casa:6789`
 
-2. **In Claude Desktop:**
-   - Go to **Settings** → **Connectors**
-   - Click **Add Custom Connector**
-   - Enter the Discovery URL from the add-on logs:
-     ```
-     http://<your-ha-ip>:7089/.well-known/oauth-authorization-server
-     ```
-
-3. **Authenticate:**
-   - Claude will redirect you to your HomeAssistant login page
-   - Log in with your HomeAssistant credentials
-   - Authorize Claude Desktop to access your MCP server
-   - You're connected! No tokens or secrets to manage
-
-#### Method 2: Direct Configuration (Legacy)
-
-For direct local connections or advanced setups:
-
-1. **Generate an Access Token (if using authentication):**
-   - In Home Assistant Add-on Configuration:
-     - Set `authentication_required` to `true`
-     - Either set a custom `access_token` or let the add-on generate one
-     - Copy the token from the add-on logs
-
-2. **Configure Claude Desktop:**
+1. **Configure Claude Desktop:**
    
    Edit `claude_desktop_config.json`:
    - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
@@ -139,24 +127,25 @@ For direct local connections or advanced setups:
    {
      "mcpServers": {
        "homeassistant": {
-         "command": "docker",
+         "command": "npx",
          "args": [
-           "exec",
-           "-i",
-           "addon_local_mcp_claude",
-           "node",
-           "/app/dist/index.js"
-         ],
-         "env": {
-           "SUPERVISOR_TOKEN": "YOUR_SUPERVISOR_TOKEN",
-           "HOMEASSISTANT_URL": "ws://supervisor/core/api/websocket"
-         }
+           "-y",
+           "@modelcontextprotocol/server-sse-client",
+           "http://homeassistant.local:6789/sse"
+         ]
        }
      }
    }
    ```
 
-3. **Restart Claude Desktop**
+   For Nabu Casa users, replace the URL with:
+   ```
+   "https://<your-id>.ui.nabu.casa:6789/sse"
+   ```
+
+2. **Restart Claude Desktop**
+
+The add-on automatically handles authentication using supervisor tokens - no manual token configuration needed!
 
 ## Usage
 
@@ -243,12 +232,12 @@ Ask Claude natural language questions and commands like:
 
 ## Security
 
-- **Rating**: 6/6 (Highest security rating)
-- **AppArmor**: Enabled with strict profile
-- **Network**: Isolated container environment
-- **Access**: Only required Home Assistant APIs
-- **Authentication**: Token-based with timeout
+- **Authentication**: Supervisor tokens for secure access
+- **Network**: Isolated container environment with ingress support
+- **Access**: Only required Home Assistant APIs via Supervisor
+- **Rate Limiting**: 100 requests per minute per tool
 - **Filtering**: Entity-level access control
+- **Input Validation**: All inputs sanitized and validated
 
 ## Documentation
 
@@ -333,7 +322,12 @@ We welcome contributions! Please see our [Development Guide](DEVELOPMENT.md) for
 
 - **Home Assistant**: 2024.10.0 or newer
 - **Claude Desktop**: Latest version with MCP support
-- **Platforms**: ARM (Raspberry Pi), AMD64 (x86_64), i386
+- **Supported Devices**:
+  - Raspberry Pi Zero/1 (armv6/armhf)
+  - Raspberry Pi 3/4 32-bit (armv7)
+  - Raspberry Pi 4/5 64-bit (aarch64/arm64)
+  - Intel/AMD systems (amd64/x86_64)
+  - Legacy 32-bit x86 (i386)
 - **Operating Systems**: HassOS, Debian, Ubuntu, Alpine Linux
 - **Integrations**: Works with all Home Assistant integrations
 

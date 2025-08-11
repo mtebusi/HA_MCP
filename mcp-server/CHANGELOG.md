@@ -5,7 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.3] - 2025-08-11
+## [1.1.5] - 2025-01-11
+
+### Fixed
+- **CRITICAL**: Fixed missing S6 overlay `/init` by properly using HomeAssistant base images
+- Resolved "exec format error" on all ARM architectures (armv6, armv7, arm64)
+- Fixed multi-architecture Docker builds with correct base image selection
+- Corrected build arguments and architecture mapping in GitHub Actions
+
+### Added
+- Full support for all Raspberry Pi models:
+  - Raspberry Pi Zero/1 (armv6/armhf)
+  - Raspberry Pi 3/4 32-bit (armv7)
+  - Raspberry Pi 4/5 64-bit (aarch64/arm64)
+- Ingress support for Nabu Casa and remote access
+- Automatic supervisor token authentication (no manual tokens needed)
+- Better connection URL documentation for local and remote access
+
+### Changed
+- Simplified authentication by removing complex OAuth2 flow
+- Now uses supervisor tokens for secure, automatic authentication
+- Improved installation instructions with uninstall requirement for older versions
+- Updated all documentation to reflect simplified setup
+
+### Removed
+- Removed complex OAuth2 authentication system
+- Removed manual token configuration requirements
+- Removed authentication_mode and external_url configuration options
+
+## [1.1.4] - 2025-01-11
+
+### Fixed
+- **CRITICAL**: Fixed S6 overlay initialization issues across all architectures
+- Resolved permission problems with init system on ARM devices
+- Fixed missing /init binary by using proper HomeAssistant base images
+- Corrected Dockerfile base image selection for multi-architecture support
+
+### Changed
+- Switched to HomeAssistant official base images for all architectures
+- Improved build process reliability for ARM devices
+- Enhanced error logging for debugging startup issues
+
+### Technical Notes
+- Base images now properly include S6 overlay for all architectures
+- Build process validates architecture-specific requirements
+- Supervisor API integration working correctly on all platforms
+
+## [1.1.3] - 2025-01-11
 
 ### Fixed
 - Removed `startup: application` field per HomeAssistant linting requirements (uses default value)
@@ -245,6 +291,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI/CD pipeline
 - Comprehensive documentation and examples
 
+[1.1.5]: https://github.com/mtebusi/HA_MCP/compare/v1.1.4...v1.1.5
+[1.1.4]: https://github.com/mtebusi/HA_MCP/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/mtebusi/HA_MCP/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/mtebusi/HA_MCP/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/mtebusi/HA_MCP/compare/v1.0.7...v1.1.1
