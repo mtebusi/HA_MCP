@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.7] - 2025-01-11
+
+### Fixed
+- **CRITICAL**: Fixed MCP SDK module resolution errors with proper TypeScript path mappings
+- Resolved S6 overlay compatibility issues with fallback script for non-S6 environments
+- Fixed multi-architecture manifest creation with proper image propagation wait times
+- Corrected Docker base image version to 3.20 for all architectures
+- Ensured all 5 architectures (amd64, aarch64, armv7, armhf, i386) are properly built and available
+
+### Added
+- Fallback startup script (run-fallback.sh) for testing outside HomeAssistant supervisor
+- TypeScript path mappings for @modelcontextprotocol/sdk to resolve CommonJS modules
+- Enhanced logging for module loading and startup diagnostics
+- Automatic detection of S6 vs non-S6 environments with appropriate script selection
+
+### Changed
+- Updated startup script to v1.1.7 with improved environment detection
+- Enhanced GitHub Actions workflow with consolidated build process
+- Improved Docker manifest creation with purge flags to prevent stale manifests
+- Optimized caching strategy using both GitHub Actions cache and registry cache
+
+### Technical Notes
+- Consolidated 5 overlapping workflows into single unified ha-addon-build.yml
+- Fixed module imports for production deployment of MCP server
+- Verified OAuth2 authentication flow with JWT token generation
+- Tested all CRUD operations on HomeAssistant entities successfully
+
 ## [1.1.5] - 2025-01-11
 
 ### Fixed

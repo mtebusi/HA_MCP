@@ -27,7 +27,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: addon-mcp-claude
-  VERSION: ${{ github.event.inputs.version || '1.1.6' }}
+  VERSION: ${{ github.event.inputs.version || '1.1.7' }}
 
 jobs:
   build-addon:
