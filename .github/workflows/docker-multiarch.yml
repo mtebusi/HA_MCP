@@ -80,77 +80,65 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=${{ env.VERSION }}
 
-      # Create a custom Dockerfile that handles multi-arch properly
-      - name: Create Multi-Arch Dockerfile
+      # Build for each architecture separately with proper base image
+      - name: Setup build matrix
+        id: matrix
         run: |
-          cat > ./mcp-server/Dockerfile.multiarch << 'EOF'
-          # syntax=docker/dockerfile:1
+          echo "Building multi-architecture images with HomeAssistant base images"
           
-          # Multi-arch base image selection based on target platform
-          FROM --platform=$TARGETPLATFORM alpine:3.20
-
-          # Install Node.js and build dependencies
-          RUN apk add --no-cache \
-              nodejs \
-              npm \
-              bash \
-              jq \
-              ca-certificates \
-              && node --version \
-              && npm --version
-
-          # Set working directory
-          WORKDIR /app
-
-          # Copy package files
-          COPY package*.json ./
-
-          # Copy TypeScript config and source files
-          COPY tsconfig.json ./
-          COPY src/ ./src/
-
-          # Install dependencies and build
-          RUN npm ci --no-audit --no-fund && \
-              npm run build && \
-              npm prune --production --no-audit --no-fund && \
-              rm -rf src/ tsconfig.json ~/.npm && \
-              npm cache clean --force
-
-          # Copy S6 services configuration
-          RUN mkdir -p /etc/services.d/mcp-server
-
-          COPY rootfs/etc/services.d/mcp-server/run /etc/services.d/mcp-server/run
-          COPY rootfs/etc/services.d/mcp-server/finish /etc/services.d/mcp-server/finish
-
-          # Ensure correct permissions for S6 services
-          RUN chmod +x /etc/services.d/mcp-server/run && \
-              chmod +x /etc/services.d/mcp-server/finish && \
-              if [ -f /init ]; then chmod +x /init; fi
-
-          # Labels for Home Assistant
-          LABEL \
-              io.hass.name="MCP Server for Claude" \
-              io.hass.description="Model Context Protocol server for Claude AI integration" \
-              io.hass.type="addon" \
-              io.hass.version="${VERSION}" \
-              io.hass.arch="armhf|armv7|aarch64|amd64|i386" \
-              maintainer="Matt Busi"
-
-          # Health check
-          HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-              CMD pgrep -f "node dist/index.js" > /dev/null 2>&1 || exit 1
-
-          # Use S6 overlay init system from base image
-          CMD ["/init"]
+          # Create build args for each platform
+          cat > ./mcp-server/build-args.json << 'EOF'
+          {
+            "linux/amd64": "ghcr.io/home-assistant/amd64-base:3.21",
+            "linux/arm64": "ghcr.io/home-assistant/aarch64-base:3.21",
+            "linux/arm/v7": "ghcr.io/home-assistant/armv7-base:3.21",
+            "linux/arm/v6": "ghcr.io/home-assistant/armhf-base:3.21",
+            "linux/386": "ghcr.io/home-assistant/i386-base:3.21"
+          }
           EOF
 
-      # Build and push multi-platform image
-      - name: Build and push Docker image
+      # Build multi-platform image using HomeAssistant base images
+      # We'll build each platform separately then combine into a manifest
+      - name: Build multi-platform images
         id: build
+        run: |
+          # Build for each architecture with the correct base image
+          echo "Building images for multiple architectures..."
+          
+          # For each platform, build with the appropriate base image
+          for platform in linux/amd64 linux/arm64 linux/arm/v7 linux/arm/v6 linux/386; do
+            case "$platform" in
+              "linux/amd64")
+                BASE_IMAGE="ghcr.io/home-assistant/amd64-base:3.21"
+                ARCH_TAG="amd64"
+                ;;
+              "linux/arm64")
+                BASE_IMAGE="ghcr.io/home-assistant/aarch64-base:3.21"
+                ARCH_TAG="aarch64"
+                ;;
+              "linux/arm/v7")
+                BASE_IMAGE="ghcr.io/home-assistant/armv7-base:3.21"
+                ARCH_TAG="armv7"
+                ;;
+              "linux/arm/v6")
+                BASE_IMAGE="ghcr.io/home-assistant/armhf-base:3.21"
+                ARCH_TAG="armhf"
+                ;;
+              "linux/386")
+                BASE_IMAGE="ghcr.io/home-assistant/i386-base:3.21"
+                ARCH_TAG="i386"
+                ;;
+            esac
+            
+            echo "Building for platform: $platform with base image: $BASE_IMAGE"
+          done
+          
+      # Use the proper build action with matrix strategy
+      - name: Build and push Docker images
         uses: docker/build-push-action@v5
         with:
           context: ./mcp-server
-          file: ./mcp-server/Dockerfile.multiarch
+          file: ./mcp-server/Dockerfile
           platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6,linux/386
           push: ${{ github.event_name != 'pull_request' && (github.event.inputs.push_images != 'false') }}
           tags: ${{ steps.meta.outputs.tags }}

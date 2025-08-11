@@ -1,5 +1,6 @@
-# Default to amd64 base image if BUILD_FROM is not specified
-ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.20
+# Multi-architecture base image support
+# BUILD_FROM will be set by the HomeAssistant builder or our build process
+ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.21
 FROM ${BUILD_FROM}
 
 # Install Node.js and build dependencies
@@ -30,19 +31,32 @@ RUN npm ci --no-audit --no-fund && \
     rm -rf src/ tsconfig.json ~/.npm && \
     npm cache clean --force
 
-# Copy S6 services configuration
-# Create the services directory structure first
+# Copy run script (fallback if S6 is not available)
+COPY run.sh /run.sh
+RUN chmod +x /run.sh
+
+# Copy S6 services configuration if using S6 overlay
+# Create the services directory structure
 RUN mkdir -p /etc/services.d/mcp-server
 
 # Copy our service files
 COPY rootfs/etc/services.d/mcp-server/run /etc/services.d/mcp-server/run
 COPY rootfs/etc/services.d/mcp-server/finish /etc/services.d/mcp-server/finish
 
-# Ensure correct permissions for S6 services
+# Ensure correct permissions for all scripts
 RUN chmod +x /etc/services.d/mcp-server/run && \
     chmod +x /etc/services.d/mcp-server/finish && \
-    # Ensure /init from base image has correct permissions (should already be set)
-    if [ -f /init ]; then chmod +x /init; fi
+    # Verify critical components from base image
+    if [ ! -f /init ]; then \
+        echo "ERROR: /init not found in base image!" && \
+        echo "Base image may not be a proper HomeAssistant base image" && \
+        exit 1; \
+    fi && \
+    chmod +x /init && \
+    # Verify bashio is available
+    if [ ! -f /usr/bin/bashio ]; then \
+        echo "WARNING: bashio not found, S6 overlay may not be properly installed"; \
+    fi
 
 # Labels for Home Assistant
 LABEL \
