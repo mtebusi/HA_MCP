@@ -3,6 +3,9 @@
 ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.20
 FROM ${BUILD_FROM}
 
+# Ensure we're running as root during build
+USER root
+
 # Install Node.js and build dependencies
 # Use architecture-agnostic installation
 RUN apk add --no-cache \
@@ -41,29 +44,31 @@ RUN find /app/dist -name "*.js" -type f -exec sed -i \
 
 # Copy main run script
 COPY run.sh /run.sh
-RUN chmod +x /run.sh
+RUN chmod a+x /run.sh
 
-# Copy S6 services configuration if using S6 overlay
-# Create the services directory structure
-RUN mkdir -p /etc/services.d/mcp-server
+# Copy S6 services configuration
+# Create the services directory structure with proper permissions
+RUN mkdir -p /etc/services.d/mcp-server && \
+    mkdir -p /etc/cont-init.d && \
+    mkdir -p /etc/fix-attrs.d
+
+# Copy init script
+COPY rootfs/etc/cont-init.d/mcp-server-init.sh /etc/cont-init.d/mcp-server-init.sh
 
 # Copy our service files
 COPY rootfs/etc/services.d/mcp-server/run /etc/services.d/mcp-server/run
 COPY rootfs/etc/services.d/mcp-server/finish /etc/services.d/mcp-server/finish
 
-# Ensure correct permissions for all scripts
-RUN chmod +x /etc/services.d/mcp-server/run && \
-    chmod +x /etc/services.d/mcp-server/finish && \
-    # Verify critical components from base image
-    if [ ! -f /init ]; then \
-        echo "ERROR: /init not found in base image!" && \
-        echo "Base image may not be a proper HomeAssistant base image" && \
-        exit 1; \
-    fi && \
-    chmod +x /init && \
-    # Verify bashio is available
+# Set proper permissions for S6 service files
+RUN chmod 755 /etc/cont-init.d/mcp-server-init.sh && \
+    chmod 755 /etc/services.d/mcp-server && \
+    chmod 755 /etc/services.d/mcp-server/run && \
+    chmod 755 /etc/services.d/mcp-server/finish && \
+    # Ensure app directory has correct permissions
+    chmod -R 755 /app && \
+    # Verify bashio is available (it should be in the base image)
     if [ ! -f /usr/bin/bashio ]; then \
-        echo "WARNING: bashio not found, S6 overlay may not be properly installed"; \
+        echo "WARNING: bashio not found in base image"; \
     fi
 
 # Labels for Home Assistant
@@ -71,7 +76,7 @@ LABEL \
     io.hass.name="MCP Server for Claude" \
     io.hass.description="Model Context Protocol server for Claude AI integration" \
     io.hass.type="addon" \
-    io.hass.version="1.1.9" \
+    io.hass.version="1.2.0" \
     io.hass.arch="armhf|armv7|aarch64|amd64|i386" \
     maintainer="Matt Busi"
 
@@ -79,5 +84,5 @@ LABEL \
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
     CMD pgrep -f "node dist/index.js" > /dev/null 2>&1 || exit 1
 
-# Use S6 overlay init system from base image
-CMD ["/init"]
+# The base image already has ENTRYPOINT ["/init"]
+# We don't need to specify CMD as the base image handles it

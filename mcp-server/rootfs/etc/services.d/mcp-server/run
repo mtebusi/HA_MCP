@@ -1,27 +1,28 @@
-#!/usr/bin/with-contenv bashio
+#!/usr/bin/with-contenv bash
 # ==============================================================================
 # Start the MCP Server service
 # ==============================================================================
 
-# Get configuration from add-on options
-declare port
-declare log_level
-declare connection_timeout
-declare max_clients
-declare enable_entity_filtering
-declare allowed_domains
-declare blocked_entities
-
-port=$(bashio::config 'port')
-log_level=$(bashio::config 'log_level')
-connection_timeout=$(bashio::config 'connection_timeout')
-max_clients=$(bashio::config 'max_clients')
-enable_entity_filtering=$(bashio::config 'enable_entity_filtering')
+# Get configuration from environment or use defaults
+port="${PORT:-6789}"
+log_level="${LOG_LEVEL:-info}"
+connection_timeout="${CONNECTION_TIMEOUT:-30000}"
+max_clients="${MAX_CLIENTS:-5}"
+enable_entity_filtering="${ENABLE_ENTITY_FILTERING:-false}"
 
 # Get HomeAssistant connection info
+if [[ -z "${SUPERVISOR_TOKEN}" ]]; then
+    echo "[$(date +%H:%M:%S)] ERROR: Supervisor token not found!" >&2
+    echo "[$(date +%H:%M:%S)] INFO: Running in test mode"
+    SUPERVISOR_TOKEN="test_token"
+fi
+
 export SUPERVISOR_TOKEN="${SUPERVISOR_TOKEN}"
+export HASSIO_TOKEN="${SUPERVISOR_TOKEN}"
 export HA_BASE_URL="http://supervisor/core"
+export HOMEASSISTANT_URL="${HOMEASSISTANT_URL:-http://localhost:8123}"
 export PORT="${port}"
+export PORT_SSE="${port}"
 export CONNECTION_MODE="sse"
 export AUTHENTICATION_MODE="supervisor"
 export LOG_LEVEL="${log_level}"
@@ -29,29 +30,17 @@ export CONNECTION_TIMEOUT="${connection_timeout}"
 export MAX_CLIENTS="${max_clients}"
 export ENABLE_ENTITY_FILTERING="${enable_entity_filtering}"
 
-# Ingress configuration
-if bashio::addon.ingress_entry; then
-    export INGRESS_INTERFACE=$(bashio::addon.ip_address)
-    export INGRESS_PORT=$(bashio::addon.ingress_port)
-    bashio::log.info "Ingress enabled on ${INGRESS_INTERFACE}:${INGRESS_PORT}"
-fi
+echo "[$(date +%H:%M:%S)] INFO: Starting MCP Server for Claude v1.2.0..."
+echo "[$(date +%H:%M:%S)] INFO: Port: ${port}"
+echo "[$(date +%H:%M:%S)] INFO: Log Level: ${log_level}"
+echo "[$(date +%H:%M:%S)] INFO: Connection Mode: SSE (Server-Sent Events)"
+echo "[$(date +%H:%M:%S)] INFO: Authentication: HomeAssistant Supervisor Token"
+echo "[$(date +%H:%M:%S)] INFO: Max Clients: ${max_clients}"
+echo "[$(date +%H:%M:%S)] INFO: Connection Timeout: ${connection_timeout}ms"
 
-# Handle array configs
-if bashio::config.has_value 'allowed_domains'; then
-    ALLOWED_DOMAINS=$(bashio::config 'allowed_domains' | jq -r 'join(",")')
-    export ALLOWED_DOMAINS
-fi
-
-if bashio::config.has_value 'blocked_entities'; then
-    BLOCKED_ENTITIES=$(bashio::config 'blocked_entities' | jq -r 'join(",")')
-    export BLOCKED_ENTITIES
-fi
-
-bashio::log.info "Starting MCP Server for Claude v1.1.4..."
-bashio::log.info "Port: ${port}"
-bashio::log.info "Connection Mode: SSE (Server-Sent Events)"
-bashio::log.info "Authentication: HomeAssistant OAuth2"
+# Change to app directory
+cd /app || exit 1
 
 # Start the Node.js application
-cd /app || exit 1
-exec node dist/index.js
+echo "[$(date +%H:%M:%S)] INFO: Starting Node.js application..."
+exec node dist/index.js 2>&1
