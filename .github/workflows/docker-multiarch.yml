@@ -85,7 +85,9 @@ jobs:
         run: |
           cat > ./mcp-server/Dockerfile.multiarch << 'EOF'
           # syntax=docker/dockerfile:1
-          FROM --platform=$TARGETPLATFORM ghcr.io/home-assistant/base:3.21
+          
+          # Multi-arch base image selection based on target platform
+          FROM --platform=$TARGETPLATFORM alpine:3.20
 
           # Install Node.js and build dependencies
           RUN apk add --no-cache \

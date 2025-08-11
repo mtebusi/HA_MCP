@@ -116,11 +116,11 @@ build_all_architectures() {
     print_status "Building all architectures..."
     
     local architectures=(
-        "amd64|ghcr.io/home-assistant/amd64-base:3.21|linux/amd64"
-        "aarch64|ghcr.io/home-assistant/aarch64-base:3.21|linux/arm64"
-        "armv7|ghcr.io/home-assistant/armv7-base:3.21|linux/arm/v7"
-        "armhf|ghcr.io/home-assistant/armhf-base:3.21|linux/arm/v6"
-        "i386|ghcr.io/home-assistant/i386-base:3.21|linux/386"
+        "amd64|ghcr.io/home-assistant/amd64-base:3.20|linux/amd64"
+        "aarch64|ghcr.io/home-assistant/aarch64-base:3.20|linux/arm64"
+        "armv7|ghcr.io/home-assistant/armv7-base:3.20|linux/arm/v7"
+        "armhf|ghcr.io/home-assistant/armhf-base:3.20|linux/arm/v6"
+        "i386|ghcr.io/home-assistant/i386-base:3.20|linux/386"
     )
     
     local successful_builds=()

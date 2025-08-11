@@ -84,11 +84,11 @@ docker buildx imagetools inspect ghcr.io/mtebusi/addon-mcp-claude:1.1.4
 
 | HA Architecture | Base Image | Docker Platform |
 |----------------|------------|-----------------|
-| amd64 | ghcr.io/home-assistant/amd64-base:3.21 | linux/amd64 |
-| aarch64 | ghcr.io/home-assistant/aarch64-base:3.21 | linux/arm64 |
-| armv7 | ghcr.io/home-assistant/armv7-base:3.21 | linux/arm/v7 |
-| armhf | ghcr.io/home-assistant/armhf-base:3.21 | linux/arm/v6 |
-| i386 | ghcr.io/home-assistant/i386-base:3.21 | linux/386 |
+| amd64 | ghcr.io/home-assistant/amd64-base:3.20 | linux/amd64 |
+| aarch64 | ghcr.io/home-assistant/aarch64-base:3.20 | linux/arm64 |
+| armv7 | ghcr.io/home-assistant/armv7-base:3.20 | linux/arm/v7 |
+| armhf | ghcr.io/home-assistant/armhf-base:3.20 | linux/arm/v6 |
+| i386 | ghcr.io/home-assistant/i386-base:3.20 | linux/386 |
 
 ## Testing on Raspberry Pi
 

@@ -82,7 +82,7 @@ jobs:
           file: ./mcp-server/Dockerfile
           platforms: linux/amd64
           build-args: |
-            BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.21
+            BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.20
           push: ${{ github.event_name != 'pull_request' || github.event.inputs.push_images == 'true' }}
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:amd64-1.1.4
           cache-from: type=local,src=/tmp/.buildx-cache
@@ -96,7 +96,7 @@ jobs:
           file: ./mcp-server/Dockerfile
           platforms: linux/arm64
           build-args: |
-            BUILD_FROM=ghcr.io/home-assistant/aarch64-base:3.21
+            BUILD_FROM=ghcr.io/home-assistant/aarch64-base:3.20
           push: ${{ github.event_name != 'pull_request' || github.event.inputs.push_images == 'true' }}
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:aarch64-1.1.4
           cache-from: type=local,src=/tmp/.buildx-cache
@@ -110,7 +110,7 @@ jobs:
           file: ./mcp-server/Dockerfile
           platforms: linux/arm/v7
           build-args: |
-            BUILD_FROM=ghcr.io/home-assistant/armv7-base:3.21
+            BUILD_FROM=ghcr.io/home-assistant/armv7-base:3.20
           push: ${{ github.event_name != 'pull_request' || github.event.inputs.push_images == 'true' }}
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:armv7-1.1.4
           cache-from: type=local,src=/tmp/.buildx-cache
@@ -124,7 +124,7 @@ jobs:
           file: ./mcp-server/Dockerfile
           platforms: linux/arm/v6
           build-args: |
-            BUILD_FROM=ghcr.io/home-assistant/armhf-base:3.21
+            BUILD_FROM=ghcr.io/home-assistant/armhf-base:3.20
           push: ${{ github.event_name != 'pull_request' || github.event.inputs.push_images == 'true' }}
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:armhf-1.1.4
           cache-from: type=local,src=/tmp/.buildx-cache
@@ -138,7 +138,7 @@ jobs:
           file: ./mcp-server/Dockerfile
           platforms: linux/386
           build-args: |
-            BUILD_FROM=ghcr.io/home-assistant/i386-base:3.21
+            BUILD_FROM=ghcr.io/home-assistant/i386-base:3.20
           push: ${{ github.event_name != 'pull_request' || github.event.inputs.push_images == 'true' }}
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:i386-1.1.4
           cache-from: type=local,src=/tmp/.buildx-cache
