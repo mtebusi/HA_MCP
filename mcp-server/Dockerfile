@@ -1,4 +1,4 @@
-ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.21
+ARG BUILD_FROM
 FROM $BUILD_FROM
 
 # Install Node.js and build dependencies

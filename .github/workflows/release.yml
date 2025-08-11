@@ -134,6 +134,14 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       
+      - name: Determine base image from build.yaml
+        id: base-image
+        run: |
+          cd mcp-server
+          BASE_IMAGE=$(yq eval '.build_from.${{ matrix.arch }}' build.yaml)
+          echo "base_image=${BASE_IMAGE}" >> $GITHUB_OUTPUT
+          echo "Using base image: ${BASE_IMAGE}"
+      
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -153,6 +161,7 @@ jobs:
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache-${{ matrix.arch }}
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache-${{ matrix.arch }},mode=max
           build-args: |
+            BUILD_FROM=${{ steps.base-image.outputs.base_image }}
             BUILD_ARCH=${{ matrix.arch }}
             BUILD_DATE=${{ github.event.repository.updated_at }}
             BUILD_REF=${{ github.sha }}
