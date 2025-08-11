@@ -50,3 +50,6 @@ RELEASE_*.md
 
 # Claude Code subagent documentation
 claude-code-subagent-docs/
+
+# Claude Code configuration
+CLAUDE.md

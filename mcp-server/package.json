@@ -1,6 +1,6 @@
 {
   "name": "homeassistant-mcp-server",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "MCP server for Home Assistant integration with WebSocket support",
   "main": "dist/index.js",
   "bin": {

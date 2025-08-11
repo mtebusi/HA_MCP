@@ -139,7 +139,7 @@ export class HomeAssistantAuthProxy {
       client_name: 'Claude Desktop MCP Connector',
       // Custom fields for MCP
       mcp_sse_endpoint: `${baseUrl.replace(':8089', ':6789')}/sse`,
-      mcp_version: '1.1.9'
+      mcp_version: '1.2.1'
     };
 
     res.writeHead(200, { 

@@ -76,7 +76,7 @@ LABEL \
     io.hass.name="MCP Server for Claude" \
     io.hass.description="Model Context Protocol server for Claude AI integration" \
     io.hass.type="addon" \
-    io.hass.version="1.2.0" \
+    io.hass.version="1.2.1" \
     io.hass.arch="armhf|armv7|aarch64|amd64|i386" \
     maintainer="Matt Busi"
 

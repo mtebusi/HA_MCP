@@ -70,7 +70,7 @@ if bashio::config.has_value 'blocked_entities'; then
     bashio::log.info "Entity blocking enabled: ${BLOCKED_ENTITIES}"
 fi
 
-bashio::log.info "Starting MCP Server for Claude v1.2.0..."
+bashio::log.info "Starting MCP Server for Claude v1.2.1..."
 bashio::log.info "Port: ${port}"
 bashio::log.info "Log Level: ${log_level}"
 bashio::log.info "Connection Mode: SSE (Server-Sent Events)"

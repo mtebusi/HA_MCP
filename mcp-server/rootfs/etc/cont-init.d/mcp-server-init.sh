@@ -8,7 +8,7 @@ if [[ -f /usr/lib/bashio/bashio.sh ]]; then
     source /usr/lib/bashio/bashio.sh
 fi
 
-echo "[$(date +%H:%M:%S)] INFO: Initializing MCP Server for Claude v1.2.0..."
+echo "[$(date +%H:%M:%S)] INFO: Initializing MCP Server for Claude v1.2.1..."
 
 # Check Node.js installation
 if ! command -v node &> /dev/null; then
