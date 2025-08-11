@@ -30,6 +30,7 @@ jobs:
 
       - name: Get changed files
         id: changed_files
+        if: github.event_name != 'release'
         uses: dorny/paths-filter@v2
         with:
           filters: |
@@ -40,10 +41,16 @@ jobs:
         id: changed_addons
         run: |
           # Always build on release events
-          if [[ "${{ github.event_name }}" == "release" ]] || [[ "${{ steps.changed_files.outputs.mcp-server }}" == "true" ]]; then
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "Building for release event"
+            echo "addons=[\"mcp-server\"]" >> $GITHUB_OUTPUT
+            echo "changed=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ steps.changed_files.outputs.mcp-server }}" == "true" ]]; then
+            echo "Building due to changed files"
             echo "addons=[\"mcp-server\"]" >> $GITHUB_OUTPUT
             echo "changed=true" >> $GITHUB_OUTPUT
           else
+            echo "No changes detected, skipping build"
             echo "addons=[]" >> $GITHUB_OUTPUT
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
