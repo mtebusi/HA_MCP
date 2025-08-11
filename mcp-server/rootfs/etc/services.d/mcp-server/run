@@ -1,0 +1,57 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Start the MCP Server service
+# ==============================================================================
+
+# Get configuration from add-on options
+declare port
+declare connection_mode
+declare authentication_mode
+declare external_url
+declare log_level
+declare connection_timeout
+declare max_clients
+declare enable_entity_filtering
+declare allowed_domains
+declare blocked_entities
+
+port=$(bashio::config 'port')
+connection_mode=$(bashio::config 'connection_mode')
+authentication_mode=$(bashio::config 'authentication_mode')
+external_url=$(bashio::config 'external_url')
+log_level=$(bashio::config 'log_level')
+connection_timeout=$(bashio::config 'connection_timeout')
+max_clients=$(bashio::config 'max_clients')
+enable_entity_filtering=$(bashio::config 'enable_entity_filtering')
+
+# Get HomeAssistant connection info
+export SUPERVISOR_TOKEN="${SUPERVISOR_TOKEN}"
+export HA_BASE_URL="http://supervisor/core"
+export PORT="${port}"
+export CONNECTION_MODE="${connection_mode}"
+export AUTHENTICATION_MODE="${authentication_mode}"
+export EXTERNAL_URL="${external_url}"
+export LOG_LEVEL="${log_level}"
+export CONNECTION_TIMEOUT="${connection_timeout}"
+export MAX_CLIENTS="${max_clients}"
+export ENABLE_ENTITY_FILTERING="${enable_entity_filtering}"
+
+# Handle array configs
+if bashio::config.has_value 'allowed_domains'; then
+    ALLOWED_DOMAINS=$(bashio::config 'allowed_domains' | jq -r 'join(",")')
+    export ALLOWED_DOMAINS
+fi
+
+if bashio::config.has_value 'blocked_entities'; then
+    BLOCKED_ENTITIES=$(bashio::config 'blocked_entities' | jq -r 'join(",")')
+    export BLOCKED_ENTITIES
+fi
+
+bashio::log.info "Starting MCP Server for Claude..."
+bashio::log.info "Port: ${port}"
+bashio::log.info "Connection Mode: ${connection_mode}"
+bashio::log.info "Authentication Mode: ${authentication_mode}"
+
+# Start the Node.js application
+cd /app || exit 1
+exec node dist/index.js

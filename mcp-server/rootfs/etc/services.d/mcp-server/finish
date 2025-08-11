@@ -1,0 +1,10 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Take down the S6 supervision tree when MCP Server fails
+# ==============================================================================
+
+bashio::log.info "MCP Server service stopped"
+
+if [[ "${1}" -ne 0 ]] && [[ "${1}" -ne 256 ]]; then
+    bashio::log.error "MCP Server crashed with exit code ${1}"
+fi
