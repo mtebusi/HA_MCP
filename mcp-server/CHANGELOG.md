@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.3] - 2025-08-11
+
+### Fixed
+- Removed `startup: application` field per HomeAssistant linting requirements (uses default value)
+- Removed `auto_update: true` field (not a standard HomeAssistant add-on field)
+- Verified multi-architecture build process working correctly
+- Ensured proper base image selection for each architecture
+
+### Technical Notes
+- The MCP server runs as a daemon with HTTP/SSE endpoint for Claude Desktop connections
+- Watchdog monitors `/health` endpoint for automatic restart on failure
+- S6 overlay init system properly configured for all architectures
+
 ## [1.1.2] - 2025-08-11
 
 ### Changed
@@ -230,6 +243,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI/CD pipeline
 - Comprehensive documentation and examples
 
+[1.1.3]: https://github.com/mtebusi/HA_MCP/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/mtebusi/HA_MCP/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/mtebusi/HA_MCP/compare/v1.0.7...v1.1.1
 [1.0.7]: https://github.com/mtebusi/HA_MCP/compare/v1.0.6...v1.0.7

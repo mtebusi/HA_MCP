@@ -1,4 +1,4 @@
-# Claude MCP Server v1.1.2
+# Claude MCP Server v1.1.3
 
 Finally, a proper way to let Claude control your Home Assistant setup. No more copy-pasting YAML, no more explaining your entity names - just natural conversation with an AI that actually understands your smart home.
 

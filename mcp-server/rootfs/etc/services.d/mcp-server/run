@@ -40,7 +40,7 @@ if bashio::config.has_value 'blocked_entities'; then
     export BLOCKED_ENTITIES
 fi
 
-bashio::log.info "Starting MCP Server for Claude v1.1.2..."
+bashio::log.info "Starting MCP Server for Claude v1.1.3..."
 bashio::log.info "Port: ${port}"
 bashio::log.info "Connection Mode: SSE (Server-Sent Events)"
 bashio::log.info "Authentication: HomeAssistant OAuth2"
