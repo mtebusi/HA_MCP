@@ -5,8 +5,6 @@
 
 # Get configuration from add-on options
 declare port
-declare authentication_mode
-declare external_url
 declare log_level
 declare connection_timeout
 declare max_clients
@@ -15,8 +13,6 @@ declare allowed_domains
 declare blocked_entities
 
 port=$(bashio::config 'port')
-authentication_mode=$(bashio::config 'authentication_mode')
-external_url=$(bashio::config 'external_url')
 log_level=$(bashio::config 'log_level')
 connection_timeout=$(bashio::config 'connection_timeout')
 max_clients=$(bashio::config 'max_clients')
@@ -27,8 +23,7 @@ export SUPERVISOR_TOKEN="${SUPERVISOR_TOKEN}"
 export HA_BASE_URL="http://supervisor/core"
 export PORT="${port}"
 export CONNECTION_MODE="sse"
-export AUTHENTICATION_MODE="${authentication_mode}"
-export EXTERNAL_URL="${external_url}"
+export AUTHENTICATION_MODE="ha_oauth2"
 export LOG_LEVEL="${log_level}"
 export CONNECTION_TIMEOUT="${connection_timeout}"
 export MAX_CLIENTS="${max_clients}"
@@ -45,10 +40,10 @@ if bashio::config.has_value 'blocked_entities'; then
     export BLOCKED_ENTITIES
 fi
 
-bashio::log.info "Starting MCP Server for Claude..."
+bashio::log.info "Starting MCP Server for Claude v1.1.2..."
 bashio::log.info "Port: ${port}"
 bashio::log.info "Connection Mode: SSE (Server-Sent Events)"
-bashio::log.info "Authentication Mode: ${authentication_mode}"
+bashio::log.info "Authentication: HomeAssistant OAuth2"
 
 # Start the Node.js application
 cd /app || exit 1

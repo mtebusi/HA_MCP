@@ -45,8 +45,8 @@ export class HomeAssistantMCPSSEServer {
   constructor() {
     // Get configuration from environment
     this.port = parseInt(process.env.MCP_PORT || '6789', 10);
-    // Use HomeAssistant auth by default for security
-    this.useHAAuth = process.env.AUTH_MODE !== 'none';
+    // Always use HomeAssistant OAuth2 authentication
+    this.useHAAuth = true;
     
     // Use supervisor proxy for internal API access
     const url = process.env.HOMEASSISTANT_URL || 'ws://supervisor/core/api/websocket';
@@ -82,7 +82,7 @@ export class HomeAssistantMCPSSEServer {
     this.server = new MCPServer(
       {
         name: 'homeassistant-mcp',
-        version: '1.0.5',
+        version: '1.1.2',
         protocolVersion: '1.0.0',
         capabilities: {
           tools: true,
@@ -199,7 +199,7 @@ export class HomeAssistantMCPSSEServer {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ 
           status: 'healthy',
-          version: '1.0.5',
+          version: '1.1.2',
           websocket: this.ws ? 'connected' : 'disconnected',
           entities: this.entityCache.size
         }));

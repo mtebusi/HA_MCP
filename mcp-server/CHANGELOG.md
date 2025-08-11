@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2025-08-11
+
+### Changed
+- **Security Enhancement**: Removed authentication mode selection - OAuth2 is now mandatory
+- **Simplified Configuration**: Removed `external_url` field (automatically configured by Nabu Casa)
+- **Improved Reliability**: Added watchdog health endpoint for automatic restart on failure
+- **Better User Experience**: Added `auto_update` support for seamless updates
+- **Container Startup**: Set `startup: application` for proper lifecycle management
+
+### Fixed
+- Multi-architecture build errors causing "exec format error" on ARM devices
+- Permission issues with init system on various architectures
+- Hardcoded version numbers in health endpoints
+
+### Removed
+- `authentication_mode` configuration option (OAuth2 only)
+- `external_url` configuration option (auto-detected)
+- Support for "none" authentication mode (security improvement)
+
+## [1.1.1] - 2025-08-11
+
+### Fixed
+- Removed redundant `boot: auto` field per HomeAssistant linting requirements
+- Fixed Docker build ARG handling for multi-architecture support
+- Corrected base image selection for each architecture in GitHub Actions
+
+### Added
+- Local build script for testing multi-architecture builds
+- Validation script for HomeAssistant add-on structure compliance
+
 ## [1.0.7] - 2025-08-10
 
 ### Added
@@ -200,6 +230,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI/CD pipeline
 - Comprehensive documentation and examples
 
+[1.1.2]: https://github.com/mtebusi/HA_MCP/compare/v1.1.1...v1.1.2
+[1.1.1]: https://github.com/mtebusi/HA_MCP/compare/v1.0.7...v1.1.1
+[1.0.7]: https://github.com/mtebusi/HA_MCP/compare/v1.0.6...v1.0.7
 [1.0.6]: https://github.com/mtebusi/HA_MCP/compare/v1.0.5...v1.0.6
 [1.0.5]: https://github.com/mtebusi/HA_MCP/compare/v1.0.4...v1.0.5
 [1.0.4]: https://github.com/mtebusi/HA_MCP/compare/v1.0.3...v1.0.4

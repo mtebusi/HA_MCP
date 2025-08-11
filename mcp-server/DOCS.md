@@ -1,4 +1,4 @@
-# Claude MCP Server v1.0.7
+# Claude MCP Server v1.1.2
 
 Finally, a proper way to let Claude control your Home Assistant setup. No more copy-pasting YAML, no more explaining your entity names - just natural conversation with an AI that actually understands your smart home.
 
@@ -23,33 +23,29 @@ After installing the add-on, you'll want to tweak a few settings:
 
 **Port** - Default is 6789. Change it if something else is camping there.
 
-**Authentication Required** - Default is now `false` for Claude Desktop Connections. Only enable this if you're using direct API access or want an extra layer of security.
-
-**Access Token** - Optional! Leave empty when using Claude Desktop Connections (recommended). Only set this if you enabled authentication for direct API access.
-
 **Log Level** - `info` is fine for normal use. `debug` if things get weird.
+
+**Connection Timeout** - How long to wait for responses (default: 30 seconds).
+
+**Max Clients** - Maximum concurrent connections (default: 5).
 
 **Entity Filtering** - Got secrets? Block specific entities or entire domains from Claude's view.
 
 ### Claude Desktop Side
 
-#### Option 1: Claude Desktop Connections (Recommended - No Token Needed!)
+#### Secure OAuth2 Authentication
 
-The easy way - let Claude handle the authentication:
+The add-on uses HomeAssistant's OAuth2 authentication for maximum security:
 
-1. Make sure `authentication_required` is `false` in the add-on config
+1. Start the add-on in Home Assistant
 2. In Claude Desktop, go to Settings → Connectors
-3. Add a Custom Connector with URL: `http://<your-ha-ip>:6789/sse`
-4. That's it! Claude handles the rest
+3. Add a Custom Connector with URL:
+   - **Local**: `http://<your-ha-ip>:6789/sse`
+   - **Nabu Casa**: Automatically configured - use your Nabu Casa URL
+4. Claude will handle OAuth2 authentication automatically
+5. That's it! No manual tokens needed
 
-#### Option 2: Direct Configuration (Legacy)
-
-For advanced users or specific network setups:
-
-1. Enable authentication in the add-on and set/note your access token
-2. Grab a long-lived access token from your HA profile  
-3. Add the config to Claude Desktop config file (see README for paths)
-4. Restart Claude Desktop
+> **Note**: External URLs are automatically detected when using Nabu Casa or other remote access solutions. You don't need to configure this manually.
 
 ## The Tools
 
@@ -96,8 +92,9 @@ Memory usage is minimal (~50MB), CPU usage is basically nothing unless you're ha
 ### Claude can't connect
 1. Check the add-on is actually running (green badge in UI)
 2. Verify the port isn't blocked by a firewall
-3. If using Claude Desktop Connections, ensure `authentication_required` is `false`
-4. If using direct connection with auth, verify the access token matches exactly (no extra spaces!)
+3. Check the add-on logs for OAuth2 authentication errors
+4. Ensure your Home Assistant instance is accessible from Claude Desktop
+5. For Nabu Casa users, the connection URL is automatically configured
 
 ### Commands fail or timeout
 - Check the add-on logs for errors

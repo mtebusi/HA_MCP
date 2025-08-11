@@ -1,5 +1,5 @@
 name: MCP Server for Claude
-version: "1.1.1"
+version: "1.1.2"
 slug: mcp_claude
 description: Control your smart home with Claude AI - bridges Claude Desktop to Home Assistant for natural language automation
 url: https://github.com/mtebusi/HA_MCP
@@ -9,10 +9,13 @@ arch:
   - aarch64
   - amd64
   - i386
+startup: application
 homeassistant: 2024.10.0
 hassio_api: true
 homeassistant_api: true
 auth_api: true
+auto_update: true
+watchdog: http://[HOST]:[PORT:6789]/health
 ports:
   6789/tcp: null
   7089/tcp: null
@@ -21,8 +24,6 @@ ports_description:
   7089/tcp: OAuth2 Authorization Server for Claude Desktop authentication
 options:
   port: 6789
-  authentication_mode: ha_oauth2
-  external_url: null
   log_level: info
   connection_timeout: 30
   max_clients: 5
@@ -31,8 +32,6 @@ options:
   blocked_entities: []
 schema:
   port: "int(1024,65535)"
-  authentication_mode: list(ha_oauth2|none)
-  external_url: "url?"
   log_level: list(debug|info|warning|error)
   connection_timeout: "int(5,300)"
   max_clients: "int(1,10)"

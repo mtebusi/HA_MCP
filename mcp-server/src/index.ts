@@ -75,7 +75,7 @@ class HomeAssistantMCPServer {
     this.server = new Server(
       {
         name: 'homeassistant-mcp',
-        version: '1.0.5',
+        version: '1.1.2',
         protocolVersion: '1.0.0',
         capabilities: {
           tools: true,
