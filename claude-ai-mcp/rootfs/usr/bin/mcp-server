@@ -1,0 +1,8 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Home Assistant Add-on: Claude AI MCP Bridge
+# MCP Server executable wrapper
+# ==============================================================================
+
+cd /app/mcp-server || exit 1
+exec node dist/index.js "$@"

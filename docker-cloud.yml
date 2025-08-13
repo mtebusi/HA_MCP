@@ -1,0 +1,41 @@
+version: 1
+autotest: false
+cache: true
+image_name: mtebusi/ha-claude-ai-mcp
+
+builds:
+  - source_type: Branch
+    source_name: main
+    dockerfile: claude-ai-mcp/Dockerfile.multiarch
+    build_context: /
+    build_args:
+      - BUILD_DATE=$BUILD_DATE
+      - BUILD_VERSION=edge
+      - BUILD_REF=$SOURCE_COMMIT
+    tags:
+      - edge
+      - edge-$SOURCE_COMMIT
+    platforms:
+      - linux/amd64
+      - linux/arm64
+      - linux/arm/v7
+      - linux/arm/v6
+      - linux/386
+
+  - source_type: Tag
+    source_name: /^v([0-9]+)\.([0-9]+)\.([0-9]+)$/
+    dockerfile: claude-ai-mcp/Dockerfile.multiarch
+    build_context: /
+    build_args:
+      - BUILD_DATE=$BUILD_DATE
+      - BUILD_VERSION=$SOURCE_NAME
+      - BUILD_REF=$SOURCE_COMMIT
+    tags:
+      - latest
+      - $SOURCE_NAME
+    platforms:
+      - linux/amd64
+      - linux/arm64
+      - linux/arm/v7
+      - linux/arm/v6
+      - linux/386

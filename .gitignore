@@ -1,55 +1,77 @@
+# Node.js dependencies and build artifacts
 node_modules/
-.claude/
 dist/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
 .env
 .env.local
-*.log
+.env.*.local
+
+# OS and IDE files
 .DS_Store
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-docs/
+Thumbs.db
+
+# Claude Code artifacts
+.claude/
+claude-code-subagent-docs/
+
+# Test files (not needed for production)
 test/
+tests/**/*.test.*
+tests/**/*.spec.*
+*.test.js
+*.spec.js
+*.test.ts
+*.spec.ts
+**/src/__tests__/
+vitest.config.js
+jest.config.js.bak
+coverage/
+.nyc_output/
 
-
-# Test and development files
+# Development and build scripts
 test-*.sh
 test-*.js
 validate-*.sh
 validate-*.js
 run-*-audit.sh
-*.test.js
-*.spec.js
-*.test.ts
-**/src/__tests__/
-vitest.config.js
 create_images.py
-
-# Build and development scripts (not needed for deployment)
 package.sh
 test-docker-build.sh
 mcp-server/build-local.sh
 mcp-server/validate-addon.sh
-mcp-server/scripts/build.sh
-mcp-server/scripts/test.sh
 mcp-server/Dockerfile.test
-scripts/
 
 # Release packages
 releases/
 *.tar.gz
 *.zip
 
-# Context and documentation files
+# Temporary and context documentation
 *-claude-context.md
 COMPLETE_CODE_REVIEW.md
 RELEASE_*.md
 *_PLAN.md
+*.tmp
+*.temp
+*.bak
 
-# Claude Code subagent documentation
-claude-code-subagent-docs/
+# Python cache (if any)
+__pycache__/
+*.py[cod]
+*$py.class
 
-# Claude Code configuration
-CLAUDE.md
+# Docker build cache
+.dockerignore.bak
+
+# Deployment documentation
+DEPLOY_ISSUES.md

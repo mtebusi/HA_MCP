@@ -1,79 +1,39 @@
 ---
-name: Bug Report
+name: Bug report
 about: Create a report to help us improve
 title: '[BUG] '
-labels: 'bug, needs-triage'
+labels: 'bug'
 assignees: ''
 
 ---
 
-## Bug Description
-<!-- A clear and concise description of what the bug is -->
+**Describe the bug**
+A clear and concise description of what the bug is.
 
-## Environment
-<!-- Please complete the following information -->
-
-- **Home Assistant Version**: 
-- **Add-on Version**: 
-- **Architecture**: <!-- armhf / armv7 / aarch64 / amd64 / i386 -->
-- **Installation Type**: <!-- Home Assistant OS / Container / Core / Supervised -->
-- **Node.js Version**: 
-- **Browser** (if applicable): 
-
-## Steps to Reproduce
-<!-- Steps to reproduce the behavior -->
-
+**To Reproduce**
+Steps to reproduce the behavior:
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'
 4. See error
 
-## Expected Behavior
-<!-- A clear and concise description of what you expected to happen -->
+**Expected behavior**
+A clear and concise description of what you expected to happen.
 
-## Actual Behavior
-<!-- What actually happened -->
+**Screenshots**
+If applicable, add screenshots to help explain your problem.
 
-## Logs
-<!-- Please include relevant logs -->
+**Environment:**
+ - Home Assistant Version: [e.g. 2024.8.0]
+ - Add-on Version: [e.g. 1.0.0]
+ - Claude Desktop Version: [e.g. 1.0.0]
+ - Architecture: [e.g. aarch64, amd64]
+ - Installation type: [e.g. Home Assistant OS, Docker, Core]
 
-### Add-on Logs
+**Logs**
 ```
-paste add-on logs here
-```
-
-### Home Assistant Logs
-```
-paste HA logs here
-```
-
-### Browser Console (if applicable)
-```
-paste browser console errors here
+Paste any relevant logs here
 ```
 
-## Screenshots
-<!-- If applicable, add screenshots to help explain your problem -->
-
-## Configuration
-<!-- Your add-on configuration (remove sensitive data) -->
-
-```yaml
-# Paste your config.yaml here
-```
-
-## Additional Context
-<!-- Add any other context about the problem here -->
-
-## Possible Solution
-<!-- If you have ideas on how to fix this bug, please share -->
-
-## Checklist
-<!-- Please check the following before submitting -->
-
-- [ ] I have searched for similar issues
-- [ ] I have included all relevant logs
-- [ ] I have removed sensitive information from logs and config
-- [ ] I am using the latest version of the add-on
-- [ ] I have tried restarting the add-on
-- [ ] I have tried restarting Home Assistant
+**Additional context**
+Add any other context about the problem here.

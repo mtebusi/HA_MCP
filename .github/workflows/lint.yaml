@@ -7,6 +7,8 @@ on:
   pull_request:
     branches:
       - main
+  schedule:
+    - cron: "0 0 * * *"
 
 jobs:
   find:
@@ -15,26 +17,49 @@ jobs:
     outputs:
       addons: ${{ steps.addons.outputs.addons_list }}
     steps:
-      - name: Check out repository
+      - name: ⤵️ Check out code from GitHub
         uses: actions/checkout@v4
 
-      - name: Find add-ons
+      - name: 🔍 Find add-on directories
         id: addons
-        run: |
-          echo "addons_list=[\"mcp-server\"]" >> $GITHUB_OUTPUT
+        uses: home-assistant/actions/helpers/find-addons@master
 
   lint:
-    name: Lint ${{ matrix.addon }}
+    name: Lint add-on ${{ matrix.path }}
     runs-on: ubuntu-latest
     needs: find
     strategy:
       matrix:
-        addon: ${{ fromJson(needs.find.outputs.addons) }}
+        path: ${{ fromJson(needs.find.outputs.addons) }}
     steps:
-      - name: Check out repository
+      - name: ⤵️ Check out code from GitHub
         uses: actions/checkout@v4
 
-      - name: Run Home Assistant Add-on Lint
+      - name: 🚀 Run Home Assistant Add-on Lint
         uses: frenck/action-addon-linter@v2
         with:
-          path: "./${{ matrix.addon }}"
+          path: "./${{ matrix.path }}"
+
+  lint-typescript:
+    name: Lint TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⤵️ Check out code from GitHub
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: ./claude-ai-mcp/mcp-server
+        run: npm ci
+
+      - name: Run TypeScript type check
+        working-directory: ./claude-ai-mcp/mcp-server
+        run: npm run type-check
+
+      - name: Run ESLint
+        working-directory: ./claude-ai-mcp/mcp-server
+        run: npm run lint

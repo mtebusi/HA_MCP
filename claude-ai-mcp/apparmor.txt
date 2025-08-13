@@ -1,0 +1,77 @@
+#include <tunables/global>
+
+profile claude_ai_mcp flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+
+  # Capabilities
+  capability,
+  file,
+  network tcp,
+  network udp,
+
+  # S6 Overlay
+  /init ix,
+  /bin/** ix,
+  /usr/bin/** ix,
+  /usr/lib/bashio/** ix,
+  /etc/s6/** ix,
+  /run/s6/** rwix,
+  /etc/services.d/** rwix,
+  /etc/cont-init.d/** rwix,
+  /etc/cont-finish.d/** rwix,
+  /var/run/** rwix,
+  /var/run/ rw,
+  /dev/tty rw,
+
+  # Bashio
+  /usr/lib/bashio/** ix,
+  /tmp/** rwix,
+
+  # Node.js and npm
+  /usr/bin/node cx,
+  /usr/bin/npm cx,
+  /usr/lib/node_modules/** r,
+  /app/** r,
+  /app/mcp-server/** r,
+  /app/mcp-server/dist/** rx,
+  /app/mcp-server/node_modules/** r,
+
+  # Data access
+  /data/** rw,
+  /data/ r,
+  /config/ r,
+  /config/** r,
+  /ssl/ r,
+  /ssl/** r,
+  /share/** rw,
+  /backup/** rw,
+
+  # Supervisor API access
+  /api/** rw,
+  /core/** rw,
+
+  # Nginx for ingress
+  /etc/nginx/** r,
+  /var/lib/nginx/** rw,
+  /var/log/nginx/** rw,
+  /run/nginx/** rw,
+  /usr/sbin/nginx cx,
+
+  # Temp files
+  /tmp/** rw,
+  /var/tmp/** rw,
+
+  # Proc filesystem
+  /proc/sys/net/ipv4/ip_local_port_range r,
+  /proc/*/stat r,
+  /proc/*/fd/ r,
+
+  # System access
+  /etc/passwd r,
+  /etc/group r,
+  /etc/hosts r,
+  /etc/resolv.conf r,
+  /etc/nsswitch.conf r,
+  /etc/ssl/** r,
+  /usr/share/ca-certificates/** r,
+}

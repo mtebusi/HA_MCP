@@ -1,0 +1,15 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Home Assistant Add-on: Claude AI MCP Bridge
+# Service finish script
+# ==============================================================================
+
+bashio::log.info "MCP Server stopped"
+
+# Cleanup any temporary files
+rm -rf /tmp/mcp-*
+
+# If the service exited with an error, log it
+if [[ "${1}" -ne 0 ]] && [[ "${1}" -ne 256 ]]; then
+    bashio::log.error "MCP Server crashed with exit code ${1}"
+fi

@@ -1,0 +1,166 @@
+name: Release Multi-Registry
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+
+env:
+  ADDON_NAME: claude-ai-mcp
+  DOCKERHUB_REPO: mtebusi/ha-claude-ai-mcp
+  GHCR_REPO: ghcr.io/mtebusi/addon-claude-ai-mcp
+
+jobs:
+  release:
+    name: Release to Multiple Registries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            VERSION="${{ github.event.release.tag_name }}"
+          else
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+          # Remove 'v' prefix if present
+          VERSION="${VERSION#v}"
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Releasing version: ${VERSION}"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push multi-arch images
+        run: |
+          ARCHITECTURES=("amd64" "armhf" "armv7" "aarch64" "i386")
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          
+          for ARCH in "${ARCHITECTURES[@]}"; do
+            echo "Building for ${ARCH}..."
+            
+            # Map architecture to platform
+            case "${ARCH}" in
+              amd64) PLATFORM="linux/amd64"; BASE="ghcr.io/home-assistant/amd64-base:latest" ;;
+              armhf) PLATFORM="linux/arm/v6"; BASE="ghcr.io/home-assistant/armhf-base:latest" ;;
+              armv7) PLATFORM="linux/arm/v7"; BASE="ghcr.io/home-assistant/armv7-base:latest" ;;
+              aarch64) PLATFORM="linux/arm64"; BASE="ghcr.io/home-assistant/aarch64-base:latest" ;;
+              i386) PLATFORM="linux/386"; BASE="ghcr.io/home-assistant/i386-base:latest" ;;
+            esac
+            
+            docker buildx build \
+              --platform "${PLATFORM}" \
+              --build-arg BUILD_FROM="${BASE}" \
+              --build-arg BUILD_DATE="$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+              --build-arg BUILD_ARCH="${ARCH}" \
+              --build-arg BUILD_VERSION="${VERSION}" \
+              --build-arg BUILD_REF="${GITHUB_SHA}" \
+              --tag "${DOCKERHUB_REPO}:${ARCH}-${VERSION}" \
+              --tag "${DOCKERHUB_REPO}:${ARCH}" \
+              --tag "${GHCR_REPO}:${ARCH}-${VERSION}" \
+              --tag "${GHCR_REPO}:${ARCH}" \
+              --push \
+              ./claude-ai-mcp
+          done
+
+      - name: Create and push versioned manifests
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          
+          # Docker Hub versioned manifest
+          docker manifest create "${DOCKERHUB_REPO}:${VERSION}" \
+            "${DOCKERHUB_REPO}:amd64-${VERSION}" \
+            "${DOCKERHUB_REPO}:armhf-${VERSION}" \
+            "${DOCKERHUB_REPO}:armv7-${VERSION}" \
+            "${DOCKERHUB_REPO}:aarch64-${VERSION}" \
+            "${DOCKERHUB_REPO}:i386-${VERSION}"
+          docker manifest push "${DOCKERHUB_REPO}:${VERSION}"
+          
+          # Docker Hub latest manifest
+          docker manifest create "${DOCKERHUB_REPO}:latest" \
+            "${DOCKERHUB_REPO}:amd64" \
+            "${DOCKERHUB_REPO}:armhf" \
+            "${DOCKERHUB_REPO}:armv7" \
+            "${DOCKERHUB_REPO}:aarch64" \
+            "${DOCKERHUB_REPO}:i386"
+          docker manifest push "${DOCKERHUB_REPO}:latest"
+          
+          # GHCR versioned manifest
+          docker manifest create "${GHCR_REPO}:${VERSION}" \
+            "${GHCR_REPO}:amd64-${VERSION}" \
+            "${GHCR_REPO}:armhf-${VERSION}" \
+            "${GHCR_REPO}:armv7-${VERSION}" \
+            "${GHCR_REPO}:aarch64-${VERSION}" \
+            "${GHCR_REPO}:i386-${VERSION}"
+          docker manifest push "${GHCR_REPO}:${VERSION}"
+          
+          # GHCR latest manifest
+          docker manifest create "${GHCR_REPO}:latest" \
+            "${GHCR_REPO}:amd64" \
+            "${GHCR_REPO}:armhf" \
+            "${GHCR_REPO}:armv7" \
+            "${GHCR_REPO}:aarch64" \
+            "${GHCR_REPO}:i386"
+          docker manifest push "${GHCR_REPO}:latest"
+
+      - name: Update Docker Hub description
+        if: github.event_name == 'release'
+        run: |
+          curl -X PATCH \
+            -H "Authorization: Bearer ${{ secrets.DOCKERHUB_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"description\": \"Claude AI MCP Bridge v${VERSION} - Connect Claude Desktop to Home Assistant\", \"full_description\": \"$(cat claude-ai-mcp/README.md | jq -Rs .)\"}" \
+            "https://hub.docker.com/v2/repositories/${DOCKERHUB_REPO}/"
+
+      - name: Create GitHub Release Notes
+        if: github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          name: Release v${{ steps.version.outputs.VERSION }}
+          body: |
+            ## Claude AI MCP Bridge v${{ steps.version.outputs.VERSION }}
+            
+            ### 🐳 Docker Images Available
+            - Docker Hub: `docker pull ${{ env.DOCKERHUB_REPO }}:${{ steps.version.outputs.VERSION }}`
+            - GitHub Container Registry: `docker pull ${{ env.GHCR_REPO }}:${{ steps.version.outputs.VERSION }}`
+            
+            ### 📦 Supported Architectures
+            - `amd64` - Standard x86-64
+            - `aarch64` - 64-bit ARM (Raspberry Pi 4/5)
+            - `armv7` - 32-bit ARM v7
+            - `armhf` - 32-bit ARM v6
+            - `i386` - 32-bit x86
+            
+            ### 🏠 Home Assistant Installation
+            Add this repository to your Home Assistant:
+            ```
+            https://github.com/mtebusi/ha-mcp
+            ```
+          draft: false
+          prerelease: false

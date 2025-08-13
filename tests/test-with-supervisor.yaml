@@ -1,0 +1,92 @@
+# Test configuration for Home Assistant Supervisor
+# This file helps test the Claude AI MCP Bridge add-on with Supervisor
+
+version: '3.8'
+
+services:
+  # Home Assistant Core
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant_test
+    environment:
+      - TZ=UTC
+    volumes:
+      - ./test_config:/config
+      - /run/dbus:/run/dbus:ro
+    network_mode: host
+    restart: unless-stopped
+    privileged: true
+
+  # Home Assistant Supervisor
+  hassio-supervisor:
+    image: ghcr.io/home-assistant/amd64-hassio-supervisor
+    container_name: hassio_supervisor_test
+    privileged: true
+    security_opt:
+      - seccomp:unconfined
+      - apparmor:unconfined
+    environment:
+      - SUPERVISOR_SHARE=/data
+      - SUPERVISOR_NAME=hassio_supervisor
+      - SUPERVISOR_DEV=1
+      - SUPERVISOR_MACHINE=qemux86-64
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/dbus:/var/run/dbus
+      - ./test_data:/data
+    network_mode: host
+    restart: unless-stopped
+
+  # Test MCP Server (standalone for testing)
+  mcp-test:
+    image: mtebusi/ha-claude-ai-mcp:amd64
+    container_name: mcp_test
+    environment:
+      - LOG_LEVEL=debug
+      - SUPERVISOR_TOKEN=test_token
+      - INGRESS_ENABLED=false
+      - SSL_ENABLED=false
+    ports:
+      - "8099:8099"
+    volumes:
+      - ./test_config:/config:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8099/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+networks:
+  default:
+    name: hassio_test
+
+# Test workflow:
+# 1. Create test directories:
+#    mkdir -p test_config test_data
+#
+# 2. Add minimal Home Assistant configuration:
+#    echo "default_config:" > test_config/configuration.yaml
+#
+# 3. Start services:
+#    docker-compose -f test-with-supervisor.yaml up -d
+#
+# 4. Wait for initialization:
+#    docker-compose -f test-with-supervisor.yaml logs -f
+#
+# 5. Test MCP discovery endpoint:
+#    curl http://localhost:8099/.well-known/mcp.json
+#
+# 6. Add repository to Supervisor:
+#    curl -X POST http://localhost:8123/api/hassio/addons/repositories \
+#      -H "Authorization: Bearer YOUR_TOKEN" \
+#      -H "Content-Type: application/json" \
+#      -d '{"repository": "https://github.com/mtebusi/ha-mcp"}'
+#
+# 7. Install add-on through Supervisor:
+#    curl -X POST http://localhost:8123/api/hassio/addons/claude_ai_mcp/install \
+#      -H "Authorization: Bearer YOUR_TOKEN"
+#
+# 8. Clean up:
+#    docker-compose -f test-with-supervisor.yaml down -v
+#    rm -rf test_config test_data

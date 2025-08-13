@@ -1,0 +1,31 @@
+configuration:
+  log_level:
+    name: Log Level
+    description: Set the logging verbosity level
+  ssl:
+    name: Enable SSL
+    description: Enable HTTPS with SSL certificates
+  certfile:
+    name: Certificate File
+    description: SSL certificate file name in /ssl directory
+  keyfile:
+    name: Private Key File
+    description: SSL private key file name in /ssl directory
+  allowed_origins:
+    name: Allowed Origins
+    description: List of allowed CORS origins for Claude Desktop
+  session_timeout:
+    name: Session Timeout
+    description: Session timeout in seconds
+  max_sessions:
+    name: Maximum Sessions
+    description: Maximum number of concurrent sessions
+  rate_limit:
+    name: Rate Limit
+    description: Maximum requests per minute per session
+  llm_hass_api:
+    name: LLM API
+    description: Home Assistant LLM API to expose (e.g., assist)
+  custom_prompt:
+    name: Custom Prompt
+    description: Custom system prompt for Claude AI

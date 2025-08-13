@@ -1,0 +1,46 @@
+# Node modules and build artifacts
+**/node_modules
+**/dist
+**/.npm
+**/.cache
+
+# Development files
+**/*.log
+**/*.pid
+**/*.seed
+**/*.pid.lock
+**/.env
+**/.env.*
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+!README.md
+!CHANGELOG.md
+!DOCS.md
+
+# Test files
+**/__tests__
+**/*.test.ts
+**/*.spec.ts
+coverage/
+.nyc_output/
+
+# Build files
+docker-bake.hcl
+Dockerfile.multiarch
+
+# Temporary files
+tmp/
+temp/

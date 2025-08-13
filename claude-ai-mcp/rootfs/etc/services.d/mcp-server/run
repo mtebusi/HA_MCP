@@ -1,0 +1,23 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Home Assistant Add-on: Claude AI MCP Bridge
+# Runs the MCP server
+# ==============================================================================
+
+bashio::log.info "Starting Claude AI MCP Server..."
+
+cd /app/mcp-server || exit 1
+
+# Verify the built application exists
+if [ ! -f "dist/index.js" ]; then
+    bashio::log.error "MCP server build not found at dist/index.js"
+    exit 1
+fi
+
+# Export Home Assistant API access
+export SUPERVISOR_TOKEN="${SUPERVISOR_TOKEN}"
+export HASSIO_API="http://supervisor/core"
+export INGRESS_PORT=8098
+
+# Start the MCP server
+exec node dist/index.js

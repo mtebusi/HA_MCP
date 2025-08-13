@@ -1,0 +1,90 @@
+name: "Claude AI MCP Bridge for Smart Home Control"
+version: "1.0.0"
+slug: "claude_ai_mcp"
+description: "Connect Claude Desktop to Home Assistant using Model Context Protocol (MCP) - Control your smart home with natural language through Claude AI"
+url: "https://github.com/mtebusi/ha-mcp/tree/main/claude-ai-mcp"
+arch:
+  - armhf
+  - armv7
+  - aarch64
+  - amd64
+  - i386
+startup: application
+boot: auto
+init: true
+host_network: false
+ingress: true
+ingress_port: 8099
+ingress_entry: "/"
+panel_icon: "mdi:robot-assistant"
+panel_title: "Claude AI MCP"
+panel_admin: false
+
+# No port exposure needed when using ingress
+ports: {}
+ports_description: {}
+
+# Zero-config defaults - everything works out of the box
+options:
+  log_level: "info"
+
+# Optional advanced configuration
+schema:
+  log_level: "list(trace|debug|info|notice|warning|error|fatal)"
+  ssl: "bool?"
+  certfile: "str?"
+  keyfile: "str?"
+  allowed_origins:
+    - "str?"
+  session_timeout: "int(300,86400)?"
+  max_sessions: "int(1,100)?"
+  rate_limit: "int(10,1000)?"
+  llm_hass_api: "str?"
+  custom_prompt: "str?"
+
+# Required API access
+auth_api: true
+homeassistant_api: true
+hassio_api: true
+hassio_role: "default"
+
+# Map directories
+map:
+  - ssl:ro
+  - config:ro
+  - share:rw
+  - backup:rw
+
+# Environment
+environment:
+  LOG_LEVEL: "{{ .log_level }}"
+
+# Security
+apparmor: true
+
+# Health monitoring
+watchdog: "http://[HOST]:8099/health"
+
+# Resource limits
+ulimits:
+  nofile:
+    soft: 1024
+    hard: 2048
+
+# Backup configuration
+backup: "hot"
+backup_exclude:
+  - "*.log"
+  - "cache/*"
+  - "sessions/*"
+
+# Multi-Registry Support - Default to Docker Hub
+image: "mtebusi/ha-claude-ai-mcp:{arch}"
+# Alternative: GitHub Container Registry
+# image: "ghcr.io/mtebusi/addon-claude-ai-mcp:{arch}"
+
+# Advanced features available but not required
+advanced: true
+
+# Web UI for discovery endpoint
+webui: "http://[HOST]:[PORT:8099]/.well-known/mcp.json"
