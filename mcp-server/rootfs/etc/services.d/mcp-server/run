@@ -1,26 +1,29 @@
-#!/usr/bin/with-contenv bash
+#!/usr/bin/with-contenv bashio
 # ==============================================================================
 # Start the MCP Server service
 # ==============================================================================
 
-# Get configuration from environment or use defaults
-port="${PORT:-6789}"
-log_level="${LOG_LEVEL:-info}"
-connection_timeout="${CONNECTION_TIMEOUT:-30000}"
-max_clients="${MAX_CLIENTS:-5}"
-enable_entity_filtering="${ENABLE_ENTITY_FILTERING:-false}"
+# Wait for init to complete
+bashio::log.info "MCP Server service starting..."
 
-# Get HomeAssistant connection info
+# Get configuration from add-on options
+port=$(bashio::config 'port')
+log_level=$(bashio::config 'log_level')
+connection_timeout=$(bashio::config 'connection_timeout')
+max_clients=$(bashio::config 'max_clients')
+enable_entity_filtering=$(bashio::config 'enable_entity_filtering')
+
+# Verify supervisor token is available
 if [[ -z "${SUPERVISOR_TOKEN}" ]]; then
-    echo "[$(date +%H:%M:%S)] ERROR: Supervisor token not found!" >&2
-    echo "[$(date +%H:%M:%S)] INFO: Running in test mode"
-    SUPERVISOR_TOKEN="test_token"
+    bashio::log.error "Supervisor token not found!"
+    exit 1
 fi
 
+# Set environment variables for the Node.js application
 export SUPERVISOR_TOKEN="${SUPERVISOR_TOKEN}"
 export HASSIO_TOKEN="${SUPERVISOR_TOKEN}"
 export HA_BASE_URL="http://supervisor/core"
-export HOMEASSISTANT_URL="${HOMEASSISTANT_URL:-http://localhost:8123}"
+export HOMEASSISTANT_URL="http://supervisor/core"
 export PORT="${port}"
 export PORT_SSE="${port}"
 export CONNECTION_MODE="sse"
@@ -30,17 +33,29 @@ export CONNECTION_TIMEOUT="${connection_timeout}"
 export MAX_CLIENTS="${max_clients}"
 export ENABLE_ENTITY_FILTERING="${enable_entity_filtering}"
 
-echo "[$(date +%H:%M:%S)] INFO: Starting MCP Server for Claude v1.2.1..."
-echo "[$(date +%H:%M:%S)] INFO: Port: ${port}"
-echo "[$(date +%H:%M:%S)] INFO: Log Level: ${log_level}"
-echo "[$(date +%H:%M:%S)] INFO: Connection Mode: SSE (Server-Sent Events)"
-echo "[$(date +%H:%M:%S)] INFO: Authentication: HomeAssistant Supervisor Token"
-echo "[$(date +%H:%M:%S)] INFO: Max Clients: ${max_clients}"
-echo "[$(date +%H:%M:%S)] INFO: Connection Timeout: ${connection_timeout}ms"
+# Handle array configs for filtering
+if bashio::config.has_value 'allowed_domains'; then
+    ALLOWED_DOMAINS=$(bashio::config 'allowed_domains' | jq -r 'join(",")')
+    export ALLOWED_DOMAINS
+    bashio::log.info "Domain filtering enabled: ${ALLOWED_DOMAINS}"
+fi
+
+if bashio::config.has_value 'blocked_entities'; then
+    BLOCKED_ENTITIES=$(bashio::config 'blocked_entities' | jq -r 'join(",")')
+    export BLOCKED_ENTITIES
+    bashio::log.info "Entity blocking enabled: ${BLOCKED_ENTITIES}"
+fi
+
+bashio::log.info "Starting MCP Server for Claude v1.2.1..."
+bashio::log.info "Port: ${port}"
+bashio::log.info "Log Level: ${log_level}"
+bashio::log.info "Connection Mode: SSE (Server-Sent Events)"
+bashio::log.info "Max Clients: ${max_clients}"
+bashio::log.info "Connection Timeout: ${connection_timeout}ms"
 
 # Change to app directory
 cd /app || exit 1
 
-# Start the Node.js application
-echo "[$(date +%H:%M:%S)] INFO: Starting Node.js application..."
-exec node dist/index.js 2>&1
+# Start the Node.js application with proper signal handling
+bashio::log.info "Starting Node.js application..."
+exec node dist/index.js

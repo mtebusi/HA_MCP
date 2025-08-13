@@ -34,17 +34,7 @@ RUN npm ci --no-audit --no-fund && \
     rm -rf src/ tsconfig.json ~/.npm && \
     npm cache clean --force
 
-# Fix MCP SDK import paths in compiled JavaScript
-# This is a workaround for module resolution issues with the MCP SDK package
-RUN find /app/dist -name "*.js" -type f -exec sed -i \
-    -e 's|require("@modelcontextprotocol/sdk/server/index")|require("/app/node_modules/@modelcontextprotocol/sdk/dist/cjs/server/index.js")|g' \
-    -e 's|require("@modelcontextprotocol/sdk/server/sse")|require("/app/node_modules/@modelcontextprotocol/sdk/dist/cjs/server/sse.js")|g' \
-    -e 's|require("@modelcontextprotocol/sdk/types")|require("/app/node_modules/@modelcontextprotocol/sdk/dist/cjs/types.js")|g' \
-    {} \;
-
-# Copy main run script
-COPY run.sh /run.sh
-RUN chmod a+x /run.sh
+# No module path fixes needed - resolved in TypeScript config
 
 # Copy S6 services configuration
 # Create the services directory structure with proper permissions

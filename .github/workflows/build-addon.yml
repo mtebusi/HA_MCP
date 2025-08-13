@@ -83,65 +83,18 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push ARMv7 image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./mcp-server
-          platforms: linux/arm/v7
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:1.2.1-armv7
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-armv7
-          build-args: |
-            BUILD_FROM=ghcr.io/home-assistant/armv7-base:3.20
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push ARMhf image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./mcp-server
-          platforms: linux/arm/v6
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:1.2.1-armhf
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-armhf
-          build-args: |
-            BUILD_FROM=ghcr.io/home-assistant/armhf-base:3.20
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push i386 image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./mcp-server
-          platforms: linux/386
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:1.2.1-i386
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-i386
-          build-args: |
-            BUILD_FROM=ghcr.io/home-assistant/i386-base:3.20
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       # Create multi-arch manifest
       - name: Create and push multi-arch manifest
         run: |
           docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:1.2.1 \
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:1.2.1-aarch64 \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:1.2.1-amd64 \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:1.2.1-armv7 \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:1.2.1-armhf \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:1.2.1-i386
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:1.2.1-amd64
           
           docker manifest push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:1.2.1
           
           docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-aarch64 \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-amd64 \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-armv7 \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-armhf \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-i386
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-amd64
           
           docker manifest push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest

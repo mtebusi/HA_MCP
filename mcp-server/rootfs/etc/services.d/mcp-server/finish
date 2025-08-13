@@ -1,23 +1,18 @@
-#!/usr/bin/with-contenv bash
+#!/usr/bin/with-contenv bashio
 # ==============================================================================
 # Take down the MCP Server service
 # ==============================================================================
 
-echo "[$(date +%H:%M:%S)] INFO: MCP Server service stopping..."
+bashio::log.info "MCP Server service stopping..."
 
-# Clean up any resources
-if pgrep -f "node dist/index.js" > /dev/null 2>&1; then
-    echo "[$(date +%H:%M:%S)] INFO: Stopping Node.js process..."
-    pkill -TERM -f "node dist/index.js" || true
-    sleep 2
-    pkill -KILL -f "node dist/index.js" || true
-fi
+# The exec in the run script should handle the process cleanup
+# We just log the exit status
 
 # Check exit code
 if [[ "${1}" -eq 0 ]] || [[ "${1}" -eq 256 ]]; then
-    echo "[$(date +%H:%M:%S)] INFO: MCP Server stopped cleanly"
+    bashio::log.info "MCP Server stopped cleanly"
 else
-    echo "[$(date +%H:%M:%S)] ERROR: MCP Server crashed with exit code ${1}" >&2
+    bashio::log.error "MCP Server crashed with exit code ${1}"
     # If it crashed, wait a bit before S6 restarts it
     sleep 5
 fi
