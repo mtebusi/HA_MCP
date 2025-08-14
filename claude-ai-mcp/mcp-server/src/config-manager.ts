@@ -1,5 +1,4 @@
 import fs from 'fs';
-import path from 'path';
 
 interface Config {
   log_level: string;

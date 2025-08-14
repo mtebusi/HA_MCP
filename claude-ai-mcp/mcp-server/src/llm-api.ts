@@ -1,4 +1,4 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { HomeAssistantBridge } from './ha-bridge';
 import { LLMTool } from './types';
@@ -15,22 +15,22 @@ export class LLMApiIntegration {
   private initializeBuiltInTools() {
     // Assist API tools
     this.addTool({
-      name: "assist_intent",
+      name: 'assist_intent',
       description: "Process natural language commands using Home Assistant's Assist API",
       parameters: {
-        type: "object",
+        type: 'object',
         properties: {
           text: { 
-            type: "string", 
-            description: "Natural language command" 
+            type: 'string', 
+            description: 'Natural language command' 
           },
           language: { 
-            type: "string", 
-            description: "Language code (default: en)",
-            default: "en"
+            type: 'string', 
+            description: 'Language code (default: en)',
+            default: 'en'
           }
         },
-        required: ["text"]
+        required: ['text']
       },
       handler: async (args) => {
         return await this.bridge.executeIntent(args.text, args.language);
@@ -39,16 +39,16 @@ export class LLMApiIntegration {
 
     // Conversation API
     this.addTool({
-      name: "conversation_process",
+      name: 'conversation_process',
       description: "Process conversation with Home Assistant's conversation agent",
       parameters: {
-        type: "object",
+        type: 'object',
         properties: {
-          text: { type: "string" },
-          conversation_id: { type: "string" },
-          language: { type: "string", default: "en" }
+          text: { type: 'string' },
+          conversation_id: { type: 'string' },
+          language: { type: 'string', default: 'en' }
         },
-        required: ["text"]
+        required: ['text']
       },
       handler: async (args) => {
         return await this.bridge.processConversation(
@@ -61,19 +61,19 @@ export class LLMApiIntegration {
 
     // Area-based control
     this.addTool({
-      name: "area_control",
-      description: "Control all devices in a specific area",
+      name: 'area_control',
+      description: 'Control all devices in a specific area',
       parameters: {
-        type: "object",
+        type: 'object',
         properties: {
-          area: { type: "string", description: "Area name or ID" },
+          area: { type: 'string', description: 'Area name or ID' },
           action: { 
-            type: "string", 
-            enum: ["turn_on", "turn_off", "toggle"],
-            description: "Action to perform"
+            type: 'string', 
+            enum: ['turn_on', 'turn_off', 'toggle'],
+            description: 'Action to perform'
           }
         },
-        required: ["area", "action"]
+        required: ['area', 'action']
       },
       handler: async (args) => {
         const devices = await this.bridge.getAreaDevices(args.area);
@@ -82,7 +82,7 @@ export class LLMApiIntegration {
         for (const device of devices) {
           try {
             const [domain] = device.entity_id.split('.');
-            const result = await this.bridge.callService(
+            await this.bridge.callService(
               domain,
               args.action,
               device.entity_id
@@ -99,17 +99,17 @@ export class LLMApiIntegration {
 
     // Template rendering
     this.addTool({
-      name: "render_template",
-      description: "Render a Home Assistant template",
+      name: 'render_template',
+      description: 'Render a Home Assistant template',
       parameters: {
-        type: "object",
+        type: 'object',
         properties: {
           template: { 
-            type: "string", 
-            description: "Jinja2 template to render" 
+            type: 'string', 
+            description: 'Jinja2 template to render' 
           }
         },
-        required: ["template"]
+        required: ['template']
       },
       handler: async (args) => {
         return await this.bridge.renderTemplate(args.template);
@@ -118,15 +118,15 @@ export class LLMApiIntegration {
 
     // Expose LLM context data
     this.addTool({
-      name: "get_llm_context",
-      description: "Get context data for LLM including available entities and areas",
+      name: 'get_llm_context',
+      description: 'Get context data for LLM including available entities and areas',
       parameters: {
-        type: "object",
+        type: 'object',
         properties: {
-          include_entities: { type: "boolean", default: true },
-          include_areas: { type: "boolean", default: true },
-          include_devices: { type: "boolean", default: true },
-          include_services: { type: "boolean", default: true }
+          include_entities: { type: 'boolean', default: true },
+          include_areas: { type: 'boolean', default: true },
+          include_devices: { type: 'boolean', default: true },
+          include_services: { type: 'boolean', default: true }
         }
       },
       handler: async (args) => {
@@ -156,7 +156,7 @@ export class LLMApiIntegration {
 
   registerTools(server: McpServer) {
     // Register tools using McpServer API
-    for (const [name, tool] of this.tools) {
+    for (const [, tool] of this.tools) {
       server.registerTool(
         tool.name,
         {
@@ -170,53 +170,53 @@ export class LLMApiIntegration {
 
     // Register resource providers for LLM context
     server.registerResource(
-      "ha-entities",
-      "ha://entities",
+      'ha-entities',
+      'ha://entities',
       {
-        title: "Home Assistant Entities",
-        description: "All exposed Home Assistant entities"
+        title: 'Home Assistant Entities',
+        description: 'All exposed Home Assistant entities'
       },
       async () => ({
         contents: [{
-          uri: "ha://entities",
+          uri: 'ha://entities',
           text: JSON.stringify(await this.bridge.getExposedEntities(), null, 2),
-          mimeType: "application/json"
+          mimeType: 'application/json'
         }]
       })
     );
 
     server.registerResource(
-      "ha-areas",
-      "ha://areas",
+      'ha-areas',
+      'ha://areas',
       {
-        title: "Home Assistant Areas",
-        description: "All configured areas"
+        title: 'Home Assistant Areas',
+        description: 'All configured areas'
       },
       async () => ({
         contents: [{
-          uri: "ha://areas",
+          uri: 'ha://areas',
           text: JSON.stringify(await this.bridge.getAreas(), null, 2),
-          mimeType: "application/json"
+          mimeType: 'application/json'
         }]
       })
     );
 
     // Register prompt templates
     server.registerPrompt(
-      "control_device",
+      'control_device',
       {
-        title: "Control Device",
-        description: "Template for controlling Home Assistant devices",
+        title: 'Control Device',
+        description: 'Template for controlling Home Assistant devices',
         argsSchema: {
-          device: z.string().describe("Device or entity to control"),
-          action: z.string().describe("Action to perform")
+          device: z.string().describe('Device or entity to control'),
+          action: z.string().describe('Action to perform')
         }
       },
       async (args: { device: string; action: string }) => ({
         messages: [{
-          role: "user" as const,
+          role: 'user' as const,
           content: {
-            type: "text" as const,
+            type: 'text' as const,
             text: `Control the ${args.device} by performing action: ${args.action}`
           }
         }]
@@ -224,19 +224,19 @@ export class LLMApiIntegration {
     );
 
     server.registerPrompt(
-      "query_state",
+      'query_state',
       {
-        title: "Query State",
-        description: "Template for querying device states",
+        title: 'Query State',
+        description: 'Template for querying device states',
         argsSchema: {
-          entity: z.string().describe("Entity to query")
+          entity: z.string().describe('Entity to query')
         }
       },
       async (args: { entity: string }) => ({
         messages: [{
-          role: "user" as const,
+          role: 'user' as const,
           content: {
-            type: "text" as const,
+            type: 'text' as const,
             text: `What is the current state of ${args.entity}?`
           }
         }]
@@ -244,20 +244,20 @@ export class LLMApiIntegration {
     );
 
     server.registerPrompt(
-      "automation_trigger",
+      'automation_trigger',
       {
-        title: "Trigger Automation",
-        description: "Template for triggering automations",
+        title: 'Trigger Automation',
+        description: 'Template for triggering automations',
         argsSchema: {
-          automation: z.string().describe("Automation to trigger"),
-          context: z.string().describe("Additional context")
+          automation: z.string().describe('Automation to trigger'),
+          context: z.string().describe('Additional context')
         }
       },
       async (args: { automation: string; context: string }) => ({
         messages: [{
-          role: "user" as const,
+          role: 'user' as const,
           content: {
-            type: "text" as const,
+            type: 'text' as const,
             text: `Trigger the ${args.automation} automation with context: ${args.context}`
           }
         }]
@@ -272,7 +272,7 @@ export class LLMApiIntegration {
         description: tool.description,
         parameters: tool.parameters
       })),
-      api_prompt: userPrompt || "You can control Home Assistant devices and query their states.",
+      api_prompt: userPrompt || 'You can control Home Assistant devices and query their states.',
       context: await this.bridge.getExposedEntities()
     };
 

@@ -21,7 +21,7 @@ on:
 
 env:
   ADDON_NAME: claude-ai-mcp
-  DOCKERHUB_REPO: mtebusi/ha-claude-ai-mcp
+  DOCKERHUB_REPO: mtebusi/homeassistant-mcp-addon
   GHCR_REPO: ghcr.io/mtebusi/addon-claude-ai-mcp
 
 jobs:

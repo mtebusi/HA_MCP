@@ -83,7 +83,7 @@ mtebusi/ha-mcp/
 
 ### Registry Strategy
 ```yaml
-Primary Registry: docker.io/mtebusi/ha-claude-ai-mcp
+Primary Registry: docker.io/mtebusi/homeassistant-mcp-addon
 Mirror Registry: ghcr.io/mtebusi/addon-claude-ai-mcp
 Build System: Docker Cloud Build + GitHub Actions
 Architectures: armhf, armv7, aarch64, amd64, i386
@@ -99,7 +99,7 @@ Architectures: armhf, armv7, aarch64, amd64, i386
 ## 📋 Docker Hub Implementation Todo List
 
 ### Phase 1: Initial Setup
-- [ ] Create Docker Hub repository `mtebusi/ha-claude-ai-mcp`
+- [ ] Create Docker Hub repository `mtebusi/homeassistant-mcp-addon`
 - [ ] Generate Docker Hub Personal Access Token
 - [ ] Add DOCKERHUB_USERNAME secret to GitHub
 - [ ] Add DOCKERHUB_TOKEN secret to GitHub
@@ -208,7 +208,7 @@ backup_exclude:
   - "sessions/*"
 
 # Multi-Registry Support - Default to Docker Hub
-image: "mtebusi/ha-claude-ai-mcp:{arch}"
+image: "mtebusi/homeassistant-mcp-addon:{arch}"
 # Alternative: GitHub Container Registry
 # image: "ghcr.io/mtebusi/addon-claude-ai-mcp:{arch}"
 
@@ -224,7 +224,7 @@ webui: "http://[HOST]:[PORT:8099]/.well-known/mcp.json"
 version: 1
 autotest: false
 cache: true
-image_name: mtebusi/ha-claude-ai-mcp
+image_name: mtebusi/homeassistant-mcp-addon
 
 builds:
   - source_type: Branch
@@ -267,7 +267,7 @@ builds:
 ## 🔨 Docker Buildx Configuration (docker-bake.hcl)
 ```hcl
 variable "DOCKERHUB_REPO" {
-  default = "mtebusi/ha-claude-ai-mcp"
+  default = "mtebusi/homeassistant-mcp-addon"
 }
 
 variable "GITHUB_REPO" {
@@ -1446,7 +1446,7 @@ mkdir -p /var/log/mcp-server
 
 # Log registry information
 bashio::log.info "Docker image registry: ${REGISTRY:-Docker Hub}"
-bashio::log.info "Image: mtebusi/ha-claude-ai-mcp:${BUILD_VERSION:-latest}"
+bashio::log.info "Image: mtebusi/homeassistant-mcp-addon:${BUILD_VERSION:-latest}"
 
 bashio::log.info "Configuration complete - add-on is ready!"
 bashio::log.info "Zero-config mode: Connect Claude Desktop to discover endpoint"

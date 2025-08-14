@@ -1,7 +1,7 @@
 version: 1
 autotest: false
 cache: true
-image_name: mtebusi/ha-claude-ai-mcp
+image_name: mtebusi/homeassistant-mcp-addon
 
 builds:
   - source_type: Branch

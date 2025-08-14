@@ -58,29 +58,29 @@ export class HealthMonitor {
     
     // Prometheus format metrics
     const metrics = [
-      `# HELP mcp_uptime_seconds MCP server uptime in seconds`,
-      `# TYPE mcp_uptime_seconds counter`,
+      '# HELP mcp_uptime_seconds MCP server uptime in seconds',
+      '# TYPE mcp_uptime_seconds counter',
       `mcp_uptime_seconds ${Math.floor(status.uptime / 1000)}`,
-      ``,
-      `# HELP mcp_requests_total Total number of requests`,
-      `# TYPE mcp_requests_total counter`,
+      '',
+      '# HELP mcp_requests_total Total number of requests',
+      '# TYPE mcp_requests_total counter',
       `mcp_requests_total ${status.requests}`,
-      ``,
-      `# HELP mcp_errors_total Total number of errors`,
-      `# TYPE mcp_errors_total counter`,
+      '',
+      '# HELP mcp_errors_total Total number of errors',
+      '# TYPE mcp_errors_total counter',
       `mcp_errors_total ${status.errors}`,
-      ``,
-      `# HELP mcp_active_connections Current number of active connections`,
-      `# TYPE mcp_active_connections gauge`,
+      '',
+      '# HELP mcp_active_connections Current number of active connections',
+      '# TYPE mcp_active_connections gauge',
       `mcp_active_connections ${status.activeConnections}`,
-      ``,
-      `# HELP mcp_memory_usage_bytes Memory usage in bytes`,
-      `# TYPE mcp_memory_usage_bytes gauge`,
+      '',
+      '# HELP mcp_memory_usage_bytes Memory usage in bytes',
+      '# TYPE mcp_memory_usage_bytes gauge',
       `mcp_memory_usage_bytes{type="rss"} ${status.memory?.rss || 0}`,
       `mcp_memory_usage_bytes{type="heapTotal"} ${status.memory?.heapTotal || 0}`,
       `mcp_memory_usage_bytes{type="heapUsed"} ${status.memory?.heapUsed || 0}`,
       `mcp_memory_usage_bytes{type="external"} ${status.memory?.external || 0}`,
-      ``
+      ''
     ];
 
     return metrics.join('\n');

@@ -79,7 +79,7 @@ backup_exclude:
   - "sessions/*"
 
 # Multi-Registry Support - Default to Docker Hub
-image: "mtebusi/ha-claude-ai-mcp:{arch}"
+image: "mtebusi/homeassistant-mcp-addon:{arch}"
 # Alternative: GitHub Container Registry
 # image: "ghcr.io/mtebusi/addon-claude-ai-mcp:{arch}"
 

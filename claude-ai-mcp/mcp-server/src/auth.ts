@@ -31,7 +31,7 @@ export class OAuth2Handler {
     return code;
   }
 
-  async createAuthorizationCode(haToken: string, clientId: string): Promise<string> {
+  async createAuthorizationCode(haToken: string, _clientId: string): Promise<string> {
     const code = crypto.randomBytes(32).toString('base64url');
     this.authCodes.set(code, haToken);
     
@@ -68,7 +68,7 @@ export class OAuth2Handler {
     };
   }
 
-  async refreshToken(refreshToken: string, clientId: string) {
+  async refreshToken(refreshToken: string, _clientId: string) {
     const oldAccessToken = this.refreshTokens.get(refreshToken);
     if (!oldAccessToken) {
       throw new Error('Invalid refresh token');

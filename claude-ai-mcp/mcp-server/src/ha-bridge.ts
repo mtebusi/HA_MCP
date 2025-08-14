@@ -1,4 +1,4 @@
-import { HAConfig, HAEntity, HARegistryEntity, HADevice, HAArea, HAService, HAConversationResponse, HAIntentResponse } from './types';
+import { HAConfig, HAEntity, HARegistryEntity, HADevice } from './types';
 
 export class HomeAssistantBridge {
   private supervisorToken: string;

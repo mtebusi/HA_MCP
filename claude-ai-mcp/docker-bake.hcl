@@ -1,5 +1,5 @@
 variable "DOCKERHUB_REPO" {
-  default = "mtebusi/ha-claude-ai-mcp"
+  default = "mtebusi/homeassistant-mcp-addon"
 }
 
 variable "GITHUB_REPO" {

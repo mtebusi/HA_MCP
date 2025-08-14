@@ -1,7 +1,7 @@
 import express from 'express';
 import { createServer } from 'https';
 import { createServer as createHttpServer } from 'http';
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { SSEServerTransport } from './sse-transport';
 import { HomeAssistantBridge } from './ha-bridge';
 import { OAuth2Handler } from './auth';
@@ -9,7 +9,6 @@ import { LLMApiIntegration } from './llm-api';
 import { setupTools } from './tools';
 import { HealthMonitor } from './health-monitor';
 import fs from 'fs';
-import path from 'path';
 
 class HomeAssistantMCPServer {
   private app: express.Application;
@@ -37,8 +36,8 @@ class HomeAssistantMCPServer {
 
   private initializeMCPServer() {
     this.mcpServer = new McpServer({
-      name: "homeassistant",
-      version: "1.0.0"
+      name: 'homeassistant',
+      version: '1.0.0'
     }, {
       capabilities: {
         tools: {},
@@ -104,18 +103,18 @@ class HomeAssistantMCPServer {
       const baseUrl = `${protocol}://${host}`;
       
       res.json({
-        version: "1.0",
-        name: "Home Assistant",
-        description: "Control your Home Assistant instance from Claude",
-        type: "remote",
-        protocol: "sse",
+        version: '1.0',
+        name: 'Home Assistant',
+        description: 'Control your Home Assistant instance from Claude',
+        type: 'remote',
+        protocol: 'sse',
         endpoint: `${baseUrl}/mcp/sse`,
         auth: {
-          type: "optional", // Make auth optional for zero-config
+          type: 'optional', // Make auth optional for zero-config
           authorization_endpoint: `${baseUrl}/auth/authorize`,
           token_endpoint: `${baseUrl}/auth/token`,
-          client_id: "claude_desktop_mcp",
-          scopes: ["control", "read"]
+          client_id: 'claude_desktop_mcp',
+          scopes: ['control', 'read']
         },
         capabilities: {
           tools: true,
@@ -124,8 +123,8 @@ class HomeAssistantMCPServer {
           llm: true
         },
         contact: {
-          name: "Matt Busi",
-          url: "https://github.com/mtebusi/ha-mcp"
+          name: 'Matt Busi',
+          url: 'https://github.com/mtebusi/ha-mcp'
         }
       });
     });
@@ -133,7 +132,7 @@ class HomeAssistantMCPServer {
     // OAuth2 Authorization endpoint (optional)
     this.app.get('/auth/authorize', async (req, res) => {
       try {
-        const { client_id, redirect_uri, state, scope, response_type } = req.query;
+        const { client_id, redirect_uri, state, scope } = req.query;
         
         // For ingress connections, use simplified auth
         if (req.headers['x-ingress-path']) {
