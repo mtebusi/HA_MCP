@@ -9,12 +9,7 @@ arch:
   - aarch64
   - amd64
   - i386
-startup: application
-boot: auto
-init: true
-host_network: false
 ingress: true
-ingress_port: 8099
 ingress_entry: "/"
 panel_icon: "mdi:robot-assistant"
 panel_title: "Claude AI MCP"
@@ -46,12 +41,11 @@ schema:
 auth_api: true
 homeassistant_api: true
 hassio_api: true
-hassio_role: "default"
 
 # Map directories
 map:
   - ssl:ro
-  - config:ro
+  - homeassistant_config:ro
   - share:rw
   - backup:rw
 
@@ -59,20 +53,9 @@ map:
 environment:
   LOG_LEVEL: "{{ .log_level }}"
 
-# Security
-apparmor: true
 
-# Health monitoring
-watchdog: "http://[HOST]:8099/health"
 
-# Resource limits
-ulimits:
-  nofile:
-    soft: 1024
-    hard: 2048
 
-# Backup configuration
-backup: "hot"
 backup_exclude:
   - "*.log"
   - "cache/*"
@@ -86,5 +69,3 @@ image: "mtebusi/homeassistant-mcp-addon:{arch}"
 # Advanced features available but not required
 advanced: true
 
-# Web UI for discovery endpoint
-webui: "http://[HOST]:[PORT:8099]/.well-known/mcp.json"
