@@ -1,3 +1,5 @@
+[![MSeeP.ai Security Assessment Badge](https://mseep.net/pr/mtebusi-ha-mcp-badge.png)](https://mseep.ai/app/mtebusi-ha-mcp)
+
 # Home Assistant Claude AI MCP Integration
 
 [![Builder](https://github.com/mtebusi/ha-mcp/actions/workflows/builder.yaml/badge.svg)](https://github.com/mtebusi/ha-mcp/actions/workflows/builder.yaml)
